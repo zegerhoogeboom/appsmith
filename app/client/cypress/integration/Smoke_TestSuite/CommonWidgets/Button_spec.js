@@ -9,7 +9,7 @@ describe("Button Widget Functionality", function() {
 
   it("Button Widget Functionality", function() {
     cy.get(".t--nav-link-widgets-editor").click();
-    cy.get(widgetsPage.buttonWidget).click({ force: true });
+    cy.openPropertyPane("buttonwidget");
 
     //Changing the text on the Button
     cy.testCodeMirror("Test Button Text");
@@ -33,6 +33,6 @@ describe("Button Widget Functionality", function() {
 
   afterEach(() => {
     //clean up
-    cy.DeleteModal();
+    //  cy.DeleteModal();
   });
 });
