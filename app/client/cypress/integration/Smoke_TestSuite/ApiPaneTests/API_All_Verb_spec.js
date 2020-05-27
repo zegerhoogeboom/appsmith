@@ -87,7 +87,8 @@ describe("API Panel Test Functionality", function() {
   });
 
   it("Test GET Action for mock API with header and pagination", function() {
-    cy.CreateSubsequentAPI("FirstAPI");
+    const apiname = "FirstAPI";
+    cy.CreateSubsequentAPI(apiname);
     cy.log("Creation of API Action successful");
     cy.EnterSourceDetailsWithHeader(
       testdata.baseUrl,
@@ -101,13 +102,13 @@ describe("API Panel Test Functionality", function() {
     cy.log("Response data check successful");
     cy.switchToPaginationTab();
     cy.selectPaginationType(apiwidget.paginationWithUrl);
-    cy.enterUrl(apiwidget.panigationNextUrl, testdata.nextUrl);
+    cy.enterUrl(apiname, apiwidget.panigationNextUrl, testdata.nextUrl);
     cy.clickTest(apiwidget.TestNextUrl);
     cy.ResponseStatusCheck(testdata.successStatusCode);
     cy.log("Response code check successful");
     cy.ResponseCheck("Josh M Krantz");
     cy.log("Response data check successful");
-    cy.enterUrl(apiwidget.panigationPrevUrl, testdata.prevUrl);
+    cy.enterUrl(apiname, apiwidget.panigationPrevUrl, testdata.prevUrl);
     cy.clickTest(apiwidget.TestPreUrl);
     cy.ResponseStatusCheck(testdata.successStatusCode);
     cy.log("Response code check successful");
@@ -130,8 +131,10 @@ describe("API Panel Test Functionality", function() {
     cy.log("Response code check successful");
     cy.ResponseCheck(testdata.responsetext3);
     cy.log("Response data check successful");
-    cy.DeleteAPI();
-    cy.CreateSubsequentAPI("SecondAPI");
+  });
+
+  it("API check with Invalid Header", function() {
+    cy.CreateSubsequentAPI("FirstAPI");
     cy.log("Creation of SecondAPI Action successful");
     cy.EnterSourceDetailsWithQueryParam(
       testdata.baseUrl,

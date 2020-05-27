@@ -267,10 +267,10 @@ Cypress.Commands.add("clickTest", testbutton => {
     .click({ force: true });
 });
 
-Cypress.Commands.add("enterUrl", (url, value) => {
+Cypress.Commands.add("enterUrl", (apiname, url, value) => {
   cy.get(url)
     .first()
-    .type(value, {
+    .type("{{".concat(apiname).concat(value), {
       force: true,
       parseSpecialCharSequences: false,
     });

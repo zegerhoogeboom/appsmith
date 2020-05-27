@@ -1,7 +1,7 @@
 const testdata = require("../../../fixtures/testdata.json");
 
 describe("API Panel Test Functionality ", function() {
-  it("Test API Copy/Move/delete feature", function() {
+  it("Test API copy/Move/delete feature", function() {
     cy.log("Login Successful");
     cy.viewport("macbook-15"); //To avoid screen Resize issues
     cy.NavigateToAPI_Panel();
