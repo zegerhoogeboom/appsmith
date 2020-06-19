@@ -160,6 +160,7 @@ Cypress.Commands.add("ResponseStatusCheck", statusCode => {
 });
 
 Cypress.Commands.add("ResponseCheck", textTocheck => {
+  //Explicit assert
   cy.get(apiwidget.responseText).should("be.visible");
 });
 

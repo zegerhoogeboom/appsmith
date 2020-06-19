@@ -10,14 +10,15 @@ describe("Test curl import flow", function() {
       "curl -X GET http://app.appsmith.com/scrap/api?slugifiedName=Freshdesk&ownerName=volodimir.kudriachenko",
     );
     cy.importCurl();
-    cy.xpath("//img[contains(@class,'EditableText')]").click();
-    cy.get(ApiEditor.ApiNameField).should("be.visible");
+    cy.xpath(apiwidget.EditApiName).should("be.visible");
     cy.get("@curlImport").then(response => {
       cy.expect(response.response.body.responseMeta.success).to.eq(true);
-      cy.get(ApiEditor.ApiNameField).should(
-        "have.value",
-        response.response.body.data.name,
-      );
+      cy.get(apiwidget.ApiName)
+        .invoke("text")
+        .then(text => {
+          const someText = text;
+          expect(someText).to.equal(response.response.body.data.name);
+        });
     });
     // cy.WaitAutoSave();
     cy.RunAPI();
