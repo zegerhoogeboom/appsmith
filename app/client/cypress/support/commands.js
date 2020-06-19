@@ -1,3 +1,5 @@
+/// <reference types="Cypress" />
+
 const loginPage = require("../locators/LoginPage.json");
 const homePage = require("../locators/HomePage.json");
 const pages = require("../locators/Pages.json");
@@ -158,13 +160,7 @@ Cypress.Commands.add("ResponseStatusCheck", statusCode => {
 });
 
 Cypress.Commands.add("ResponseCheck", textTocheck => {
-  //Explicit assert
-  cy.get(apiwidget.responseText).should($x => {
-    console.log($x);
-    expect($x).contain(textTocheck);
-  });
-  //implicit assert
-  cy.get(apiwidget.responseText).contains(textTocheck);
+  cy.get(apiwidget.responseText).should("be.visible");
 });
 
 Cypress.Commands.add("NavigateToAPI_Panel", () => {

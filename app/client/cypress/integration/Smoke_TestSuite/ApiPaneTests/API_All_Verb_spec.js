@@ -120,7 +120,7 @@ describe("API Panel Test Functionality", function() {
     cy.log("Response data check successful");
   });
 
-  it.skip("API check with query params test API fetaure", function() {
+  it("API check with query params test API fetaure", function() {
     cy.CreateAPI("FirstAPI");
     cy.log("Creation of FirstAPI Action successful");
     cy.EnterSourceDetailsWithQueryParam(
