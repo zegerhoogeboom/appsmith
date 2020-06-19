@@ -1,4 +1,5 @@
 const ApiEditor = require("../../../locators/ApiEditor.json");
+const apiwidget = require("../../../locators/apiWidgetsLocator.json");
 
 describe("Test curl import flow", function() {
   it("Test curl import flow for POST action", function() {
@@ -13,6 +14,9 @@ describe("Test curl import flow", function() {
       },
     );
     cy.importCurl();
+    cy.RunAPI();
+    cy.ResponseStatusCheck("200 OK");
+    cy.xpath(apiwidget.EditApiName).click();
     cy.get(ApiEditor.ApiNameField).should("be.visible");
     cy.get("@curlImport").then(response => {
       cy.expect(response.response.body.responseMeta.success).to.eq(true);
@@ -21,5 +25,6 @@ describe("Test curl import flow", function() {
         response.response.body.data.name,
       );
     });
+    cy.RunAPI();
   });
 });

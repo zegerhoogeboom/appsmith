@@ -10,6 +10,7 @@ describe("Test curl import flow", function() {
       "curl -X GET http://app.appsmith.com/scrap/api?slugifiedName=Freshdesk&ownerName=volodimir.kudriachenko",
     );
     cy.importCurl();
+    cy.xpath("//img[contains(@class,'EditableText')]").click();
     cy.get(ApiEditor.ApiNameField).should("be.visible");
     cy.get("@curlImport").then(response => {
       cy.expect(response.response.body.responseMeta.success).to.eq(true);
@@ -20,7 +21,7 @@ describe("Test curl import flow", function() {
     });
     // cy.WaitAutoSave();
     cy.RunAPI();
-
+    cy.ResponseStatusCheck("200 OK");
     cy.get(ApiEditor.formActionButtons).should("be.visible");
     cy.get(ApiEditor.ApiDeleteBtn).click();
     cy.get(ApiEditor.ApiDeleteBtn).should("be.disabled");
