@@ -146,15 +146,19 @@ const createActionErrorResponse = (
     ? response.responseMeta.error.code.toString()
     : "Error",
   headers: {},
-  requestHeaders: {},
-  requestBody: null,
+  request: {
+    headers: {},
+    body: {},
+    httpMethod: "",
+    url: "",
+  },
   duration: "0",
   size: "0",
 });
 
 export function* evaluateDynamicBoundValueSaga(path: string): any {
   log.debug("Evaluating data tree to get action binding value");
-  const tree = yield select(evaluateDataTree);
+  const tree = yield select(evaluateDataTree(true));
   const dynamicResult = getDynamicValue(`{{${path}}}`, tree);
   return dynamicResult.result;
 }
@@ -377,7 +381,7 @@ export function* executeAppAction(action: ReduxAction<ExecuteActionPayload>) {
   const { dynamicString, event, responseData } = action.payload;
   log.debug("Evaluating data tree to get action trigger");
   log.debug({ dynamicString });
-  const tree = yield select(evaluateDataTree);
+  const tree = yield select(evaluateDataTree(true));
   log.debug({ tree });
   const { triggers } = getDynamicValue(dynamicString, tree, responseData, true);
   log.debug({ triggers });
