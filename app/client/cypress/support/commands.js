@@ -427,6 +427,11 @@ Cypress.Commands.add("CopyAPIToHome", apiname => {
     .click({ force: true });
   cy.get(apiwidget.copyTo).click({ force: true });
   cy.get(apiwidget.home).click({ force: true });
+  cy.wait("@createNewApi").should(
+    "have.nested.property",
+    "response.body.responseMeta.status",
+    201,
+  );
 });
 
 Cypress.Commands.add("DeleteAPI", apiname => {
