@@ -427,13 +427,6 @@ Cypress.Commands.add("CopyAPIToHome", apiname => {
     .click({ force: true });
   cy.get(apiwidget.copyTo).click({ force: true });
   cy.get(apiwidget.home).click({ force: true });
-  /*
-  cy.wait("@createNewApi").should(
-    "have.nested.property",
-    "response.body.responseMeta.status",
-    201,
-  );
-  */
 });
 
 Cypress.Commands.add("DeleteAPI", apiname => {
@@ -441,13 +434,6 @@ Cypress.Commands.add("DeleteAPI", apiname => {
     .first()
     .click({ force: true });
   cy.get(apiwidget.delete).click({ force: true });
-  /*
-  cy.wait("@deleteAction").should(
-    "have.nested.property",
-    "response.body.responseMeta.status",
-    200,
-  );
-  */
 });
 
 Cypress.Commands.add("CreateModal", () => {
@@ -911,15 +897,6 @@ Cypress.Commands.add("testSaveDeleteDatasource", () => {
 
   cy.get(".t--delete-datasource").click();
   cy.wait("@deleteDatasource").should(
-    "have.nested.property",
-    "response.body.responseMeta.status",
-    200,
-  );
-});
-
-Cypress.Commands.add("testDeleteApi", () => {
-  //cy.get(ApiEditor.createBlankApiCard).click({ force: true });
-  cy.wait("@deleteAction").should(
     "have.nested.property",
     "response.body.responseMeta.status",
     200,
