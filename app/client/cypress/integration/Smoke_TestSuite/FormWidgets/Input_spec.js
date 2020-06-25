@@ -29,6 +29,9 @@ describe("Input Widget Functionality", function() {
       .invoke("attr", "value")
       .should("contain", this.data.para);
     cy.openPropertyPane("inputwidget");
+    cy.get(".t--widget-propertypane-toggle")
+      .first()
+      .click({ force: true });
     cy.get(widgetsPage.defaultInput)
       .type(this.data.command)
       .type(this.data.defaultdata);

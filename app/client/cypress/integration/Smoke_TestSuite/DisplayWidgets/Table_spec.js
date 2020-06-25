@@ -30,6 +30,9 @@ describe("Table Widget Functionality", function() {
     // });
     cy.pageNo();
     cy.openPropertyPane("tablewidget");
+    cy.get(".t--widget-propertypane-toggle")
+      .first()
+      .click({ force: true });
     cy.get(widgetsPage.tableOnRowSelected)
       .get(commonlocators.dropdownSelectButton)
       .first()

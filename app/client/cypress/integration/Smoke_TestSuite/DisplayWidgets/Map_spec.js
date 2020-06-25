@@ -46,6 +46,9 @@ describe("Map Widget Functionality", function() {
       .type("{enter}");
   });
   it("Map-Enable Location,Map search and Create Marker Property Validation", function() {
+    cy.get(".t--widget-propertypane-toggle")
+      .first()
+      .click({ force: true });
     /**
      * Enable the Search Location checkbox and Validate the same in editor mode
      */

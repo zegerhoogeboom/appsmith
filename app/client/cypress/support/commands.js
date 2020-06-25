@@ -1015,7 +1015,7 @@ Cypress.Commands.add("openPropertyPane", widgetType => {
     .wait(500);
   cy.get(`${selector}:first-of-type .t--widget-propertypane-toggle`)
     .first()
-    .click();
+    .click({ force: true });
 });
 
 Cypress.Commands.add("closePropertyPane", () => {
@@ -1026,10 +1026,12 @@ Cypress.Commands.add("createApi", (url, parameters) => {
   cy.get("@createNewApi").then(response => {
     cy.get(ApiEditor.ApiNameField).should("be.visible");
     cy.expect(response.response.body.responseMeta.success).to.eq(true);
-    cy.get(ApiEditor.ApiNameField).should(
-      "have.value",
-      response.response.body.data.name,
-    );
+    cy.get(ApiEditor.ApiNameField)
+      .invoke("text")
+      .then(text => {
+        const someText = text;
+        expect(someText).to.equal(response.response.body.data.name);
+      });
   });
 
   cy.get(ApiEditor.dataSourceField).click();
