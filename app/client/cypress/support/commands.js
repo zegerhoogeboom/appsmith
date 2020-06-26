@@ -180,8 +180,8 @@ Cypress.Commands.add("CreateAPI", apiname => {
   cy.wait("@postSave");
   cy.get(apiwidget.resourceUrl).should("be.visible");
   cy.wait("@postexe");
-  cy.xpath(apiwidget.EditApiName).should("be.visible");
-  cy.xpath(apiwidget.EditApiName).click();
+  cy.get(apiwidget.EditApiName).should("be.visible");
+  cy.get(apiwidget.EditApiName).click();
   cy.get(apiwidget.apiTxt)
     .clear()
     .type(apiname)
@@ -207,7 +207,7 @@ Cypress.Commands.add("CreateSubsequentAPI", apiname => {
 
 Cypress.Commands.add("EditApiName", apiname => {
   //cy.wait("@getUser");
-  cy.xpath(apiwidget.EditApiName).click();
+  cy.get(apiwidget.EditApiName).click();
   cy.get(apiwidget.apiTxt)
     .clear()
     .type(apiname)
@@ -385,7 +385,7 @@ Cypress.Commands.add("CreationOfUniqueAPIcheck", apiname => {
   cy.wait("@createNewApi");
   // cy.wait("@getUser");
   cy.get(apiwidget.resourceUrl).should("be.visible");
-  cy.xpath(apiwidget.EditApiName).click();
+  cy.get(apiwidget.EditApiName).click();
   cy.get(apiwidget.apiTxt)
     .clear()
     .type(apiname)
