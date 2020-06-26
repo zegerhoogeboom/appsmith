@@ -177,14 +177,15 @@ Cypress.Commands.add("CreateAPI", apiname => {
     .click({ force: true });
   cy.get(apiwidget.createapi).click({ force: true });
   cy.wait("@createNewApi");
-  //cy.wait("@getUser");
+  cy.wait("@postSave");
   cy.get(apiwidget.resourceUrl).should("be.visible");
+  cy.wait("@postexe");
   cy.xpath(apiwidget.EditApiName).click();
   cy.get(apiwidget.apiTxt)
     .clear()
     .type(apiname)
     .should("have.value", apiname);
-  //cy.WaitAutoSave();
+  cy.WaitAutoSave();
   // Added because api name edit takes some time to
   // reflect in api sidebar after the call passes.
   cy.wait(4000);
