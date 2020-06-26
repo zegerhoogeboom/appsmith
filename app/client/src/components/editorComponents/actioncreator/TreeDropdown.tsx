@@ -5,10 +5,10 @@ import {
   StyledPopover,
   StyledDropDownContainer,
   StyledMenuItem,
+  StyledMenu,
 } from "components/propertyControls/StyledControls";
 import {
   Button as BlueprintButton,
-  Menu,
   PopoverInteractionKind,
   PopoverPosition,
 } from "@blueprintjs/core";
@@ -27,7 +27,11 @@ type TreeDropdownProps = {
   getDefaults?: Function;
   defaultText: string;
   onSelect: (value: TreeDropdownOption, defaultVal?: string) => void;
-  selectedLabelModifier?: (option: TreeDropdownOption) => string;
+  selectedLabelModifier?: (
+    option: TreeDropdownOption,
+    displayValue?: string,
+  ) => React.ReactNode;
+  displayValue?: string;
   toggle?: React.ReactNode;
 };
 
@@ -36,7 +40,7 @@ function getSelectedOption(
   defaultText: string,
   options: TreeDropdownOption[],
 ) {
-  let selectedOption = {
+  let selectedOption: TreeDropdownOption = {
     label: defaultText,
     value: "",
   };
@@ -65,6 +69,7 @@ export default function TreeDropdown(props: TreeDropdownProps) {
     onSelect,
     getDefaults,
     selectedLabelModifier,
+    displayValue,
     toggle,
   } = props;
   const selectedOption = getSelectedOption(
@@ -83,7 +88,9 @@ export default function TreeDropdown(props: TreeDropdownProps) {
   };
 
   function renderTreeOption(option: TreeDropdownOption) {
-    const isSelected = selectedOption.value === option.value;
+    const isSelected =
+      selectedOption.value === option.value ||
+      selectedOption.type === option.value;
     return (
       <StyledMenuItem
         className={option.className || "single-select"}
@@ -105,17 +112,19 @@ export default function TreeDropdown(props: TreeDropdownProps) {
   }
 
   const list = optionTree.map(renderTreeOption);
-  const menuItems = <Menu>{list}</Menu>;
+  const menuItems = <StyledMenu>{list}</StyledMenu>;
   const defaultToggle = (
     <StyledDropDownContainer>
       <BlueprintButton
         rightIcon={IconNames.CHEVRON_DOWN}
         text={
           selectedLabelModifier
-            ? selectedLabelModifier(selectedOption)
+            ? selectedLabelModifier(selectedOption, displayValue)
             : selectedOption.label
         }
-        className={`t--open-dropdown-${defaultText.split(" ").join("-")}`}
+        className={`t--open-dropdown-${defaultText.split(" ").join("-")} ${
+          selectedLabelModifier ? "code-highlight" : ""
+        }`}
       />
     </StyledDropDownContainer>
   );

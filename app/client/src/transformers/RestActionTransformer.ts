@@ -1,4 +1,8 @@
-import { HTTP_METHODS, POST_BODY_FORMATS } from "constants/ApiEditorConstants";
+import {
+  CONTENT_TYPE,
+  HTTP_METHODS,
+  POST_BODY_FORMAT_OPTIONS,
+} from "constants/ApiEditorConstants";
 import _ from "lodash";
 
 export const transformRestAction = (data: any): any => {
@@ -30,19 +34,27 @@ export const transformRestAction = (data: any): any => {
       action.actionConfiguration.headers &&
       action.actionConfiguration.headers.length
     ) {
-      const contentTypeHeader = _.find(action.actionConfiguration.headers, {
-        key: "content-type",
-      });
+      const contentTypeHeader = _.find(
+        action.actionConfiguration.headers,
+        header => {
+          return header.key.toLowerCase() === CONTENT_TYPE;
+        },
+      );
       if (contentTypeHeader) {
         contentType = contentTypeHeader.value;
       }
     }
-    let formatIndex = 2;
-    if (POST_BODY_FORMATS.includes(contentType)) {
-      formatIndex = POST_BODY_FORMATS.indexOf(contentType);
+    let body: any = "";
+
+    if (
+      contentType !== POST_BODY_FORMAT_OPTIONS[1].value &&
+      contentType !== POST_BODY_FORMAT_OPTIONS[2].value
+    ) {
+      action.actionConfiguration.bodyFormData = undefined;
+      if (action.actionConfiguration.body)
+        body = action.actionConfiguration.body || undefined;
     }
 
-    let body = action.actionConfiguration.body[formatIndex] || undefined;
     if (!_.isString(body)) body = JSON.stringify(body);
     action = {
       ...action,

@@ -27,6 +27,7 @@ class RadioGroupWidget extends BaseWidget<RadioGroupWidgetProps, WidgetState> {
       selectedOption:
         "{{_.find(this.options, { value: this.selectedOptionValue })}}",
       isValid: `{{ this.isRequired ? !!this.selectedOptionValue : true }}`,
+      value: `{{this.selectedOptionValue}}`,
     };
   }
   static getTriggerPropertyMap(): TriggerPropertiesMap {
@@ -53,7 +54,7 @@ class RadioGroupWidget extends BaseWidget<RadioGroupWidgetProps, WidgetState> {
         widgetId={this.props.widgetId}
         onRadioSelectionChange={this.onRadioSelectionChange}
         key={this.props.widgetId}
-        label={`${this.props.label}${this.props.isRequired ? " *" : ""}`}
+        label={`${this.props.label}`}
         selectedOptionValue={this.props.selectedOptionValue}
         options={this.props.options}
         isLoading={this.props.isLoading}

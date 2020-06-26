@@ -7,14 +7,17 @@ import {
   Classes,
   Popover,
   MenuItem,
+  Menu,
 } from "@blueprintjs/core";
 import { DropdownOption } from "widgets/DropdownWidget";
 import { ContainerOrientation } from "constants/WidgetConstants";
 import { DateInput } from "@blueprintjs/datetime";
 import { Colors } from "constants/Colors";
+import { Skin } from "constants/DefaultTheme";
 
 type ControlWrapperProps = {
   orientation?: ContainerOrientation;
+  isAction?: boolean;
 };
 
 export const ControlWrapper = styled.div<ControlWrapperProps>`
@@ -22,8 +25,8 @@ export const ControlWrapper = styled.div<ControlWrapperProps>`
   justify-content: space-between;
   align-items: center;
   flex-direction: ${props =>
-    props.orientation === "VERTICAL" ? "column" : "row"}
-  margin: ${props => props.theme.spaces[3]}px 0;
+    props.orientation === "VERTICAL" ? "column" : "row"};
+  padding: ${props => (props.isAction ? "0" : "8px 0 ")};
   & > label {
     color: ${props => props.theme.colors.paneText};
     margin-bottom: ${props => props.theme.spaces[1]}px;
@@ -72,6 +75,21 @@ export const StyledDropDownContainer = styled.div`
     background-color: ${Colors.SHARK};
     color: ${Colors.CADET_BLUE};
     background-image: none;
+    &.code-highlight {
+      .language-javascript {
+        border: none;
+        box-shadow: none;
+        background: transparent;
+        white-space: normal;
+        word-break: break-word;
+      }
+      .bp3-button-text {
+        white-space: normal;
+        word-break: break-word;
+        display: block;
+        overflow: auto;
+      }
+    }
   }
   &&&& .${Classes.MENU_ITEM} {
     border-radius: ${props => props.theme.radii[1]}px;
@@ -121,6 +139,16 @@ export const StyledDropDownContainer = styled.div`
   }
   width: 100%;
 `;
+
+export const StyledMenu = styled(Menu)`
+  && {
+    background: ${props => props.theme.dropdown[Skin.DARK].inActiveBG};
+  }
+  .bp3-submenu .bp3-menu {
+    background: ${props => props.theme.dropdown[Skin.DARK].inActiveBG};
+  }
+`;
+
 const DropDown = Select.ofType<DropdownOption>();
 export const StyledDropDown = styled(DropDown)`
   div {
@@ -188,15 +216,19 @@ export const StyledPopover = styled(Popover)`
 export const StyledMenuItem = styled(MenuItem)`
   &&&&&& {
     border-radius: ${props => props.theme.radii[1]}px;
+    background: ${props => props.theme.dropdown[Skin.DARK].inActiveBG};
+    color: ${props => props.theme.dropdown[Skin.DARK].inActiveText};
+    padding: 4px 8px;
+    margin: 4px 0px;
     &:hover {
-      background: ${Colors.POLAR};
+      background: ${props => props.theme.dropdown[Skin.DARK].hoverBG};
       &&&.bp3-menu-item.bp3-intent-danger:hover {
         background: ${props => props.theme.colors.error};
       }
     }
     &.${Classes.ACTIVE} {
-      background: ${Colors.POLAR};
-      color: ${props => props.theme.colors.textDefault};
+      background: ${props => props.theme.dropdown[Skin.DARK].hoverBG};
+      color: ${props => props.theme.dropdown[Skin.DARK].hoverText};
       position: relative;
       &.single-select {
         &:before {
@@ -204,12 +236,15 @@ export const StyledMenuItem = styled(MenuItem)`
           top: -2px;
           position: absolute;
           content: "";
-          background: ${props => props.theme.colors.primary};
+          background: ${props => props.theme.dropdown[Skin.DARK].hoverBG};
           border-radius: 4px 0 0 4px;
           width: 4px;
           height: 100%;
         }
       }
+    }
+    &&&& .${Classes.MENU} {
+      background: ${props => props.theme.dropdown[Skin.DARK].inActiveBG};
     }
   }
 `;
@@ -274,4 +309,9 @@ export const StyledPropertyPaneButton = styled(Button)`
       height: 14px;
     }
   }
+`;
+
+export const FieldWrapper = styled.div`
+  position: relative;
+  width: 100%;
 `;

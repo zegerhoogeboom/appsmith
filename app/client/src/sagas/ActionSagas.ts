@@ -24,13 +24,14 @@ import ActionAPI, {
   ExecuteActionRequest,
   PaginationField,
   Property,
-  RestAction,
 } from "api/ActionAPI";
 import { AppState } from "reducers";
 import _ from "lodash";
 import { mapToPropList } from "utils/AppsmithUtils";
 import { AppToaster } from "components/editorComponents/ToastComponent";
 import { GenericApiResponse } from "api/ApiResponses";
+import PageApi from "api/PageApi";
+import { updateCanvasWithDSL } from "sagas/PageSagas";
 import {
   copyActionError,
   copyActionSuccess,
@@ -42,8 +43,8 @@ import {
   FetchActionsPayload,
   moveActionError,
   moveActionSuccess,
-  runApiAction,
   updateActionSuccess,
+  fetchActionsForPage,
 } from "actions/actionActions";
 import {
   getDynamicBindings,
@@ -64,6 +65,7 @@ import {
 import {
   getCurrentApplicationId,
   getPageList,
+  getCurrentPageId,
 } from "selectors/editorSelectors";
 import history from "utils/history";
 import {
@@ -74,6 +76,9 @@ import { ToastType } from "react-toastify";
 import AnalyticsUtil from "utils/AnalyticsUtil";
 import * as log from "loglevel";
 import { QUERY_CONSTANT } from "constants/QueryEditorConstants";
+import { Action, RestAction } from "entities/Action";
+import { ActionData } from "reducers/entityReducers/actionsReducer";
+import { getActions } from "selectors/entitiesSelector";
 
 export const getAction = (
   state: AppState,
@@ -109,7 +114,7 @@ const createActionSuccessResponse = (
 const isErrorResponse = (response: ActionApiResponse) => {
   return (
     (response.responseMeta && response.responseMeta.error) ||
-    !/2\d\d/.test(response.data.statusCode)
+    !response.data.isExecutionSuccess
   );
 };
 
@@ -139,13 +144,19 @@ const createActionErrorResponse = (
     ? response.responseMeta.error.code.toString()
     : "Error",
   headers: {},
+  request: {
+    headers: {},
+    body: {},
+    httpMethod: "",
+    url: "",
+  },
   duration: "0",
   size: "0",
 });
 
 export function* evaluateDynamicBoundValueSaga(path: string): any {
   log.debug("Evaluating data tree to get action binding value");
-  const tree = yield select(evaluateDataTree);
+  const tree = yield select(evaluateDataTree(true));
   const dynamicResult = getDynamicValue(`{{${path}}}`, tree);
   return dynamicResult.result;
 }
@@ -367,8 +378,11 @@ export function* executeActionTriggers(
 export function* executeAppAction(action: ReduxAction<ExecuteActionPayload>) {
   const { dynamicString, event, responseData } = action.payload;
   log.debug("Evaluating data tree to get action trigger");
-  const tree = yield select(evaluateDataTree);
+  log.debug({ dynamicString });
+  const tree = yield select(evaluateDataTree(true));
+  log.debug({ tree });
   const { triggers } = getDynamicValue(dynamicString, tree, responseData, true);
+  log.debug({ triggers });
   if (triggers && triggers.length) {
     yield all(
       triggers.map(trigger => call(executeActionTriggers, trigger, event)),
@@ -459,9 +473,14 @@ export function* updateActionSaga(
     const isApi = actionPayload.payload.data.pluginType === "API";
     const { data } = actionPayload.payload;
     let action = data;
+
     if (isApi) {
       action = transformRestAction(data);
+      action.name = (yield select(getActions)).find(
+        (act: any) => act.config.id === action.id,
+      )?.config.name;
     }
+
     const response: GenericApiResponse<RestAction> = yield ActionAPI.updateAPI(
       action,
     );
@@ -478,10 +497,6 @@ export function* updateActionSaga(
           pageName,
         });
       }
-      AppToaster.show({
-        message: `${actionPayload.payload.data.name} Action updated`,
-        type: ToastType.SUCCESS,
-      });
 
       AnalyticsUtil.logEvent("SAVE_API", {
         apiId: response.data.id,
@@ -489,9 +504,9 @@ export function* updateActionSaga(
         pageName: pageName,
       });
       yield put(updateActionSuccess({ data: response.data }));
-      if (actionPayload.payload.data.pluginType !== "DB") {
-        yield put(runApiAction(data.id));
-      }
+      // if (actionPayload.payload.data.pluginType !== "DB") {
+      //   yield put(runApiAction(data.id));
+      // }
     }
   } catch (error) {
     yield put({
@@ -532,6 +547,18 @@ export function* deleteActionSaga(
   }
 }
 
+export function extractBindingsFromAction(action: Action) {
+  const bindings: string[] = [];
+  action.dynamicBindingPathList.forEach(a => {
+    const value = _.get(action, a.key);
+    if (isDynamicValue(value)) {
+      const { jsSnippets } = getDynamicBindings(value);
+      bindings.push(...jsSnippets.filter(jsSnippet => !!jsSnippet));
+    }
+  });
+  return bindings;
+}
+
 export function* runApiActionSaga(
   reduxAction: ReduxAction<{
     id: string;
@@ -557,15 +584,7 @@ export function* runApiActionSaga(
     }
     if (dirty) {
       action = _.omit(transformRestAction(values), "id") as RestAction;
-
-      const actionString = JSON.stringify(action);
-      if (isDynamicValue(actionString)) {
-        const { jsSnippets } = getDynamicBindings(actionString);
-        // Replace cause the existing keys could have been updated
-        jsonPathKeys = jsSnippets.filter(jsSnippet => !!jsSnippet);
-      } else {
-        jsonPathKeys = [];
-      }
+      jsonPathKeys = extractBindingsFromAction(action as RestAction);
     }
     const { paginationField } = reduxAction.payload;
 
@@ -742,6 +761,79 @@ function* copyActionSaga(
   }
 }
 
+export function* refactorActionName(
+  id: string,
+  pageId: string,
+  oldName: string,
+  newName: string,
+) {
+  // fetch page of the action
+  const pageResponse = yield call(PageApi.fetchPage, {
+    pageId: pageId,
+  });
+  // check if page request is successful
+  const isPageRequestSuccessful = yield validateResponse(pageResponse);
+  if (isPageRequestSuccessful) {
+    // get the layoutId from the page response
+    const layoutId = pageResponse.data.layouts[0].id;
+    // call to refactor action
+    const refactorResponse = yield ActionAPI.updateActionName({
+      layoutId,
+      pageId: pageId,
+      oldName: oldName,
+      newName: newName,
+    });
+
+    const isRefactorSuccessful = yield validateResponse(refactorResponse);
+
+    const currentPageId = yield select(getCurrentPageId);
+    if (isRefactorSuccessful) {
+      yield put({
+        type: ReduxActionTypes.SAVE_API_NAME_SUCCESS,
+        payload: {
+          actionId: id,
+        },
+      });
+      if (currentPageId === pageId) {
+        yield updateCanvasWithDSL(refactorResponse.data, pageId, layoutId);
+      } else {
+        yield put(fetchActionsForPage(pageId));
+      }
+    }
+  }
+}
+
+function* saveApiNameSaga(action: ReduxAction<{ id: string; name: string }>) {
+  // Takes from drafts, checks if the name isValid, saves
+  const apiId = action.payload.id;
+  const api = yield select(state =>
+    state.entities.actions.find(
+      (action: ActionData) => action.config.id === apiId,
+    ),
+  );
+  try {
+    yield refactorActionName(
+      api.config.id,
+      api.config.pageId,
+      api.config.name,
+      action.payload.name,
+    );
+  } catch (e) {
+    yield put({
+      type: ReduxActionErrorTypes.SAVE_API_NAME_ERROR,
+      payload: {
+        actionId: action.payload.id,
+        oldName: api.config.name,
+      },
+    });
+    AppToaster.show({
+      message: `Unable to update API name`,
+      type: ToastType.ERROR,
+    });
+    console.error(e);
+  }
+}
+
 export function* watchActionSagas() {
   yield all([
     takeEvery(ReduxActionTypes.FETCH_ACTIONS_INIT, fetchActionsSaga),
@@ -750,6 +842,7 @@ export function* watchActionSagas() {
     takeEvery(ReduxActionTypes.CREATE_ACTION_INIT, createActionSaga),
     takeLatest(ReduxActionTypes.UPDATE_ACTION_INIT, updateActionSaga),
     takeLatest(ReduxActionTypes.DELETE_ACTION_INIT, deleteActionSaga),
+    takeLatest(ReduxActionTypes.SAVE_API_NAME, saveApiNameSaga),
     takeLatest(
       ReduxActionTypes.EXECUTE_PAGE_LOAD_ACTIONS,
       executePageLoadActionsSaga,

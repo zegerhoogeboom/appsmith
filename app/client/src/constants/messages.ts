@@ -5,8 +5,9 @@ export const ERROR_MESSAGE_CREATE_APPLICATION =
 export const API_PATH_START_WITH_SLASH_ERROR = "Path cannot start with /";
 export const FIELD_REQUIRED_ERROR = "This field is required";
 export const VALID_FUNCTION_NAME_ERROR =
-  "Action name is not a valid function name";
-export const UNIQUE_NAME_ERROR = "Action name must be unique";
+  "Must be a valid variable name (camelCase)";
+export const UNIQUE_NAME_ERROR = "Name must be unique";
+export const NAME_SPACE_ERROR = "Name must not have spaces";
 
 export const FORM_VALIDATION_EMPTY_EMAIL = "Please enter an email";
 export const FORM_VALIDATION_INVALID_EMAIL =
@@ -134,3 +135,19 @@ export const AUTOFIT_COLUMN = "Autofit column";
 
 export const TIMEZONE = "Timezone";
 export const ENABLE_TIME = "Enable Time";
+
+export const BACK_TO_EDITOR = "Back to Editor";
+
+export const LIGHTNING_MENU_DATA_API = "Use data from an API";
+export const LIGHTNING_MENU_DATA_QUERY = "Use data from a Query";
+export const LIGHTNING_MENU_DATA_TOOLTIP = "Quick start data binding";
+export const LIGHTNING_MENU_DATA_WIDGET = "Use data from a Widget";
+export const LIGHTNING_MENU_QUERY_CREATE_NEW = "Create new Query";
+export const LIGHTNING_MENU_API_CREATE_NEW = "Create new API";
+
+export const LIGHTNING_MENU_OPTION_TEXT = "Plain Text";
+export const LIGHTNING_MENU_OPTION_JS = "JS";
+export const LIGHTNING_MENU_OPTION_HTML = "HTML";
+export const CHECK_REQUEST_BODY = "Check Request body to debug?";
+export const DONT_SHOW_THIS_AGAIN = "Don't show this again";
+export const SHOW_REQUEST = "Show Request";

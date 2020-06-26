@@ -8,14 +8,14 @@ import {
 import moment from "moment";
 import {
   WIDGET_TYPE_VALIDATION_ERROR,
-  NAVIGATE_TO_VALIDATION_ERROR,
+  // NAVIGATE_TO_VALIDATION_ERROR,
 } from "constants/messages";
-import { modalGetter } from "components/editorComponents/actioncreator/ActionCreator";
+// import { modalGetter } from "components/editorComponents/actioncreator/ActionCreator";
 import { WidgetProps } from "widgets/BaseWidget";
 import { DataTree } from "entities/DataTree/dataTreeFactory";
-import { PageListPayload } from "constants/ReduxActionConstants";
-import { isDynamicValue } from "./DynamicBindingUtils";
-const URL_REGEX = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/;
+// import { PageListPayload } from "constants/ReduxActionConstants";
+// import { isDynamicValue } from "./DynamicBindingUtils";
+// const URL_REGEX = /^(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-z0-9]+([-.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/;
 
 export const VALIDATORS: Record<ValidationType, Validator> = {
   [VALIDATION_TYPES.TEXT]: (
@@ -184,6 +184,7 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
         return {
           isValid: false,
           parsed: [],
+          transformed: undefined,
           message: `${WIDGET_TYPE_VALIDATION_ERROR}: Array/List`,
         };
       }
@@ -194,20 +195,22 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
         return {
           isValid: false,
           parsed: [],
+          transformed: parsed,
           message: `${WIDGET_TYPE_VALIDATION_ERROR}: Array/List`,
         };
       }
-      return { isValid: true, parsed };
+      return { isValid: true, parsed, transformed: parsed };
     } catch (e) {
       console.error(e);
       return {
         isValid: false,
         parsed: [],
+        transformed: parsed,
         message: `${WIDGET_TYPE_VALIDATION_ERROR}: Array/List`,
       };
     }
   },
-  [VALIDATION_TYPES.TABLE_DATA]: (
+  [VALIDATION_TYPES.TABS_DATA]: (
     value: any,
     props: WidgetProps,
     dataTree?: DataTree,
@@ -221,13 +224,48 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
       return {
         isValid,
         parsed,
-        message: `${WIDGET_TYPE_VALIDATION_ERROR}: Table Data`,
+        message: `${WIDGET_TYPE_VALIDATION_ERROR}: Tabs Data`,
       };
     } else if (!_.every(parsed, datum => _.isObject(datum))) {
       return {
         isValid: false,
         parsed: [],
-        message: `${WIDGET_TYPE_VALIDATION_ERROR}: Table Data`,
+        message: `${WIDGET_TYPE_VALIDATION_ERROR}: Tabs Data`,
+      };
+    }
+    return { isValid, parsed };
+  },
+  [VALIDATION_TYPES.TABLE_DATA]: (
+    value: any,
+    props: WidgetProps,
+    dataTree?: DataTree,
+  ): ValidationResponse => {
+    const { isValid, transformed, parsed } = VALIDATORS[VALIDATION_TYPES.ARRAY](
+      value,
+      props,
+      dataTree,
+    );
+    if (!isValid) {
+      return {
+        isValid,
+        parsed: [],
+        transformed,
+        message: `${WIDGET_TYPE_VALIDATION_ERROR}: [{ "Col1" : "val1", "Col2" : "val2" }]`,
+      };
+    }
+    const isValidTableData = _.every(parsed, datum => {
+      return (
+        _.isObject(datum) &&
+        Object.keys(datum).filter(key => _.isString(key) && key.length === 0)
+          .length === 0
+      );
+    });
+    if (!isValidTableData) {
+      return {
+        isValid: false,
+        parsed: [],
+        transformed,
+        message: `${WIDGET_TYPE_VALIDATION_ERROR}: [{ "Col1" : "val1", "Col2" : "val2" }]`,
       };
     }
     return { isValid, parsed };
@@ -237,6 +275,10 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
     props: WidgetProps,
     dataTree?: DataTree,
   ): ValidationResponse => {
+    if (_.isString(value)) {
+      value = value.replace(/\s/g, "");
+      value = `${value}`;
+    }
     const { isValid, parsed } = VALIDATORS[VALIDATION_TYPES.ARRAY](
       value,
       props,
@@ -246,33 +288,48 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
       return {
         isValid,
         parsed,
+        transformed: parsed,
         message: `${WIDGET_TYPE_VALIDATION_ERROR}: Chart Data`,
       };
     }
-    const hasChartData = _.every(
+    let validationMessage = "";
+    let index = 0;
+    const isValidChartData = _.every(
       parsed,
-      (datum: { seriesName: any; data: any }) => {
-        if (_.isObject(datum)) {
-          return (
-            _.isString(datum.seriesName) &&
-            _.isArray(datum.data) &&
-            _.every(datum.data, (item: { x: any; y: any }) => {
-              return _.isString(item.x) && !_.isUndefined(item.y);
-            })
+      (datum: { name: string; data: any }) => {
+        const validatedResponse: {
+          isValid: boolean;
+          parsed: object;
+          message?: string;
+        } = VALIDATORS[VALIDATION_TYPES.ARRAY](datum.data, props, dataTree);
+        validationMessage = `${index}##${WIDGET_TYPE_VALIDATION_ERROR}: [{ "x": "val", "y": "val" }]`;
+        let isValidChart = validatedResponse.isValid;
+        if (validatedResponse.isValid) {
+          datum.data = validatedResponse.parsed;
+          isValidChart = _.every(
+            datum.data,
+            (chartPoint: { x: string; y: any }) => {
+              return (
+                _.isObject(chartPoint) &&
+                _.isString(chartPoint.x) &&
+                !_.isUndefined(chartPoint.y)
+              );
+            },
           );
-        } else {
-          return false;
         }
+        index++;
+        return isValidChart;
       },
     );
-    if (!hasChartData) {
+    if (!isValidChartData) {
       return {
         isValid: false,
         parsed: [],
-        message: `${WIDGET_TYPE_VALIDATION_ERROR}: Chart Data`,
+        transformed: parsed,
+        message: validationMessage,
       };
     }
-    return { isValid, parsed };
+    return { isValid, parsed, transformed: parsed };
   },
   [VALIDATION_TYPES.MARKERS]: (
     value: any,
@@ -333,7 +390,7 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
     return { isValid, parsed };
   },
   [VALIDATION_TYPES.DATE]: (
-    value: any,
+    dateString: string,
     props: WidgetProps,
     dataTree?: DataTree,
   ): ValidationResponse => {
@@ -341,17 +398,22 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
       .hour(0)
       .minute(0)
       .second(0)
-      .millisecond(0)
-      .toISOString(true);
-    if (value === undefined) {
+      .millisecond(0);
+    const dateFormat = props.dateFormat ? props.dateFormat : moment.ISO_8601;
+    // const dateStr = moment().toISOString();
+    const todayDateString = today.format(dateFormat);
+    if (dateString === undefined) {
       return {
         isValid: false,
-        parsed: today,
-        message: `${WIDGET_TYPE_VALIDATION_ERROR}: Date`,
+        parsed: "",
+        message:
+          `${WIDGET_TYPE_VALIDATION_ERROR}: Date ` + props.dateFormat
+            ? props.dateFormat
+            : "",
       };
     }
-    const isValid = moment(value).isValid();
-    const parsed = isValid ? moment(value).toISOString(true) : today;
+    const isValid = moment(dateString, dateFormat).isValid();
+    const parsed = isValid ? dateString : todayDateString;
     return {
       isValid,
       parsed,
@@ -363,6 +425,14 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
     props: WidgetProps,
     dataTree?: DataTree,
   ): ValidationResponse => {
+    if (Array.isArray(value) && value.length) {
+      return {
+        isValid: true,
+        parsed: undefined,
+        transformed: "Function Call",
+      };
+    }
+    /*
     if (_.isString(value)) {
       if (value.indexOf("navigateTo") !== -1) {
         const pageNameOrUrl = modalGetter(value);
@@ -388,9 +458,12 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
         }
       }
     }
+    */
     return {
-      isValid: true,
-      parsed: value,
+      isValid: false,
+      parsed: undefined,
+      transformed: "undefined",
+      message: "Not a function call",
     };
   },
   [VALIDATION_TYPES.ARRAY_ACTION_SELECTOR]: (

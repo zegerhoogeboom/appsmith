@@ -31,7 +31,7 @@ const WrappedDragLayer = styled.div<{
 
   background-image: radial-gradient(
     circle,
-    ${props => props.theme.colors.grid} 2px,
+    ${props => props.theme.colors.grid} 1px,
     transparent 0
   );
   background-size: ${props => props.columnWidth}px ${props => props.rowHeight}px;
@@ -51,6 +51,7 @@ type DragLayerProps = {
   parentCols?: number;
   isResizing?: boolean;
   parentWidgetId: string;
+  force: boolean;
 };
 
 const DragLayerComponent = (props: DragLayerProps) => {
@@ -129,7 +130,11 @@ const DragLayerComponent = (props: DragLayerProps) => {
     }
   });
 
-  if ((!isDragging || !props.visible || !props.isOver) && !props.isResizing) {
+  if (
+    (!isDragging || !props.visible || !props.isOver) &&
+    !props.force &&
+    !props.isResizing
+  ) {
     return null;
   }
 

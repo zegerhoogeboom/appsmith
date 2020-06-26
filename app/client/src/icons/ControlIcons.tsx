@@ -9,10 +9,14 @@ import { ReactComponent as OverflowMenuIcon } from "assets/icons/menu/overflow-m
 import { ReactComponent as JsToggleIcon } from "assets/icons/control/js-toggle.svg";
 import { ReactComponent as IncreaseIcon } from "assets/icons/control/increase.svg";
 import { ReactComponent as DecreaseIcon } from "assets/icons/control/decrease.svg";
-
 import { ReactComponent as DraggableIcon } from "assets/icons/control/draggable.svg";
 import { ReactComponent as CloseIcon } from "assets/icons/control/close.svg";
-import { ReactComponent as PickMyLocationIcon } from "assets/icons/control/pick-my-location.svg";
+import { ReactComponent as HelpIcon } from "assets/icons/control/help.svg";
+
+import { ReactComponent as PickMyLocationSelectedIcon } from "assets/icons/control/pick-location-selected.svg";
+import { ReactComponent as SettingsIcon } from "assets/icons/control/settings.svg";
+import { ReactComponent as YoutubeIcon } from "assets/icons/control/youtube.svg";
+
 /* eslint-disable react/display-name */
 
 export const ControlIcons: {
@@ -73,9 +77,24 @@ export const ControlIcons: {
       <CloseIcon />
     </IconWrapper>
   ),
-  PICK_MY_LOCATION_CONTROL: (props: IconProps) => (
+  PICK_MY_LOCATION_SELECTED_CONTROL: (props: IconProps) => (
     <IconWrapper {...props}>
-      <PickMyLocationIcon />
+      <PickMyLocationSelectedIcon />
+    </IconWrapper>
+  ),
+  SETTINGS_CONTROL: (props: IconProps) => (
+    <IconWrapper {...props}>
+      <SettingsIcon />
+    </IconWrapper>
+  ),
+  HELP_CONTROL: (props: IconProps) => (
+    <IconWrapper {...props}>
+      <HelpIcon />
+    </IconWrapper>
+  ),
+  OPEN_YOUTUBE: (props: IconProps) => (
+    <IconWrapper {...props}>
+      <YoutubeIcon />
     </IconWrapper>
   ),
 };

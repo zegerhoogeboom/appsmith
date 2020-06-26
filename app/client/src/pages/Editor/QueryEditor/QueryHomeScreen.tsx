@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Icon, Card } from "@blueprintjs/core";
+import { Icon, Card, Spinner } from "@blueprintjs/core";
 import { connect } from "react-redux";
 import { AppState } from "reducers";
 import ImageAlt from "assets/images/placeholder-image.svg";
@@ -14,7 +14,6 @@ import {
 } from "selectors/entitiesSelector";
 import { ActionDataState } from "reducers/entityReducers/actionsReducer";
 import { Datasource } from "api/DatasourcesApi";
-import { RestAction } from "api/ActionAPI";
 import history from "utils/history";
 import { createActionRequest } from "actions/actionActions";
 import {
@@ -25,10 +24,11 @@ import {
 import { Page } from "constants/ReduxActionConstants";
 import {
   QUERY_EDITOR_URL_WITH_SELECTED_PAGE_ID,
-  QUERIES_EDITOR_ID_URL,
   DATA_SOURCES_EDITOR_URL,
 } from "constants/routes";
 import AnalyticsUtil from "utils/AnalyticsUtil";
+import { QueryAction } from "entities/Action";
+import CenteredWrapper from "components/designSystems/appsmith/CenteredWrapper";
 
 const QueryHomePage = styled.div`
   font-size: 20px;
@@ -86,6 +86,10 @@ const CardsWrapper = styled.div`
   }
 `;
 
+const LoadingContainer = styled(CenteredWrapper)`
+  height: 50%;
+`;
+
 const DatasourceCardsContainer = styled.div`
   flex: 1;
   display: inline-flex;
@@ -116,7 +120,7 @@ type QueryHomeScreenProps = {
   dataSources: Datasource[];
   applicationId: string;
   pageId: string;
-  createAction: (data: Partial<RestAction>) => void;
+  createAction: (data: Partial<QueryAction>) => void;
   actions: ActionDataState;
   pluginIds: Array<string> | undefined;
   isCreating: boolean;
@@ -143,7 +147,9 @@ class QueryHomeScreen extends React.Component<QueryHomeScreenProps> {
     if (pageId) {
       const newQueryName = createNewQueryName(actions, pageId);
 
-      history.push(QUERIES_EDITOR_ID_URL(applicationId, pageId));
+      history.push(
+        QUERY_EDITOR_URL_WITH_SELECTED_PAGE_ID(applicationId, pageId, pageId),
+      );
       this.props.createAction({
         name: newQueryName,
         pageId,
@@ -180,6 +186,7 @@ class QueryHomeScreen extends React.Component<QueryHomeScreenProps> {
       pageId,
       history,
       location,
+      isCreating,
     } = this.props;
 
     const validDataSources: Array<Datasource> = [];
@@ -197,6 +204,14 @@ class QueryHomeScreen extends React.Component<QueryHomeScreenProps> {
     if (!destinationPageId) {
       history.push(
         QUERY_EDITOR_URL_WITH_SELECTED_PAGE_ID(applicationId, pageId, pageId),
+      );
+    }
+
+    if (isCreating) {
+      return (
+        <LoadingContainer>
+          <Spinner size={30} />
+        </LoadingContainer>
       );
     }
 
@@ -240,7 +255,7 @@ class QueryHomeScreen extends React.Component<QueryHomeScreenProps> {
                         src={this.getImageSrc(dataSource)}
                         className="dataSourceImage"
                         alt="Datasource"
-                      ></img>
+                      />
 
                       <p
                         className="textBtn t--datasource-name"
@@ -268,7 +283,7 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = (dispatch: any) => ({
-  createAction: (data: Partial<RestAction>) => {
+  createAction: (data: Partial<QueryAction>) => {
     dispatch(createActionRequest(data));
   },
 });

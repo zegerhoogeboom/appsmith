@@ -9,18 +9,25 @@ import EditorSidebar from "pages/Editor/EditorSidebar";
 import { QUERY_CONSTANT } from "constants/QueryEditorConstants";
 import { QueryEditorRouteParams } from "constants/routes";
 import { Datasource } from "api/DatasourcesApi";
+import { getPluginImage } from "pages/Editor/QueryEditor/helpers";
+import { Plugin } from "api/PluginApi";
 import {
   createActionRequest,
   moveActionRequest,
   copyActionRequest,
 } from "actions/actionActions";
-import { deleteQuery } from "actions/queryPaneActions";
-import { RestAction } from "api/ActionAPI";
-import { changeQuery, initQueryPane } from "actions/queryPaneActions";
-import { getQueryActions } from "selectors/entitiesSelector";
+import {
+  deleteQuery,
+  changeQuery,
+  initQueryPane,
+} from "actions/queryPaneActions";
+import { getQueryActions, getPlugins } from "selectors/entitiesSelector";
 import { getNextEntityName } from "utils/AppsmithUtils";
 import { getDataSources } from "selectors/editorSelectors";
 import { QUERY_EDITOR_URL_WITH_SELECTED_PAGE_ID } from "constants/routes";
+import { RestAction } from "entities/Action";
+import { Colors } from "constants/Colors";
+import { ActionDraftsState } from "reducers/entityReducers/actionDraftsReducer";
 
 const ActionItem = styled.div`
   flex: 1;
@@ -34,11 +41,26 @@ const ActionName = styled.span`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-left: 10px;
+  max-width: 125px;
+`;
+
+const StyledImage = styled.img`
+  height: 20px;
+  width: 20px;
+
+  svg {
+    path {
+      fill: ${Colors.WHITE};
+    }
+  }
 `;
 
 interface ReduxStateProps {
+  plugins: Plugin[];
   queries: ActionDataState;
   apiPane: ApiPaneReduxState;
+  actionDrafts: ActionDraftsState;
   actions: ActionDataState;
   dataSources: Datasource[];
 }
@@ -68,8 +90,8 @@ class QuerySidebar extends React.Component<Props> {
 
   shouldComponentUpdate(nextProps: Readonly<Props>): boolean {
     if (
-      Object.keys(nextProps.apiPane.drafts) !==
-      Object.keys(this.props.apiPane.drafts)
+      Object.keys(nextProps.actionDrafts) !==
+      Object.keys(this.props.actionDrafts)
     ) {
       return true;
     }
@@ -148,6 +170,11 @@ class QuerySidebar extends React.Component<Props> {
   renderItem = (query: RestAction) => {
     return (
       <ActionItem>
+        <StyledImage
+          src={getPluginImage(this.props.plugins, query.pluginId)}
+          className="pluginImage"
+          alt="Plugin Image"
+        />
         <ActionName>{query.name}</ActionName>
       </ActionItem>
     );
@@ -155,29 +182,21 @@ class QuerySidebar extends React.Component<Props> {
 
   render() {
     const {
-      apiPane: { drafts },
+      actionDrafts,
       apiPane: { isFetching },
       match: {
         params: { queryId },
       },
       queries,
-      dataSources,
     } = this.props;
     const data = queries.map(a => a.config);
-
-    const validDataSources: Array<Datasource> = [];
-    dataSources.forEach(dataSource => {
-      if (dataSource.isValid) {
-        validDataSources.push(dataSource);
-      }
-    });
 
     return (
       <EditorSidebar
         isLoading={isFetching}
         list={data}
         selectedItemId={queryId}
-        draftIds={Object.keys(drafts)}
+        draftIds={Object.keys(actionDrafts)}
         itemRender={this.renderItem}
         onItemCreateClick={this.handleCreateNewQueryClick}
         onItemSelected={this.handleQueryChange}
@@ -191,7 +210,9 @@ class QuerySidebar extends React.Component<Props> {
 }
 
 const mapStateToProps = (state: AppState): ReduxStateProps => ({
+  plugins: getPlugins(state),
   queries: getQueryActions(state),
+  actionDrafts: state.entities.actionDrafts,
   apiPane: state.ui.apiPane,
   actions: state.entities.actions,
   dataSources: getDataSources(state),

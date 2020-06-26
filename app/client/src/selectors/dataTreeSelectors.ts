@@ -1,10 +1,8 @@
 import { createSelector } from "reselect";
-import { getActionsForCurrentPage } from "./entitiesSelector";
+import { getActionDrafts, getActionsForCurrentPage } from "./entitiesSelector";
 import { ActionDataState } from "reducers/entityReducers/actionsReducer";
 import { getEvaluatedDataTree } from "utils/DynamicBindingUtils";
-import { extraLibraries } from "jsExecution/JSExecutionManagerSingleton";
 import { DataTree, DataTreeFactory } from "entities/DataTree/dataTreeFactory";
-import _ from "lodash";
 import { getWidgets, getWidgetsMeta } from "sagas/selectors";
 import * as log from "loglevel";
 import "url-search-params-polyfill";
@@ -39,33 +37,40 @@ import { getPageList } from "./appViewSelectors";
 //   },
 // );
 //
-export const getUnevaluatedDataTree = createSelector(
-  getActionsForCurrentPage,
-  getWidgets,
-  getWidgetsMeta,
-  getPageList,
-  (actions, widgets, widgetsMeta, pageListPayload) => {
-    const pageList = pageListPayload || [];
-    return DataTreeFactory.create({
-      actions,
-      widgets,
-      widgetsMeta,
-      pageList,
-    });
-  },
-);
+export const getUnevaluatedDataTree = (withFunctions?: boolean) =>
+  createSelector(
+    getActionsForCurrentPage,
+    getActionDrafts,
+    getWidgets,
+    getWidgetsMeta,
+    getPageList,
+    (actions, actionDrafts, widgets, widgetsMeta, pageListPayload) => {
+      const pageList = pageListPayload || [];
+      return DataTreeFactory.create(
+        {
+          actions,
+          actionDrafts,
+          widgets,
+          widgetsMeta,
+          pageList,
+        },
+        withFunctions,
+      );
+    },
+  );
 
-export const evaluateDataTree = createSelector(
-  getUnevaluatedDataTree,
-  (dataTree: DataTree): DataTree => {
-    return getEvaluatedDataTree(dataTree);
-  },
-);
+export const evaluateDataTree = (withFunctions?: boolean) =>
+  createSelector(
+    getUnevaluatedDataTree(withFunctions),
+    (dataTree: DataTree): DataTree => {
+      return getEvaluatedDataTree(dataTree);
+    },
+  );
 
 // For autocomplete. Use actions cached responses if
 // there isn't a response already
 export const getDataTreeForAutocomplete = createSelector(
-  evaluateDataTree,
+  evaluateDataTree(false),
   getActionsForCurrentPage,
   (tree: DataTree, actions: ActionDataState) => {
     log.debug("Evaluating data tree to get autocomplete values");
@@ -83,9 +88,6 @@ export const getDataTreeForAutocomplete = createSelector(
         }
       });
     }
-    _.omit(tree, ["MainContainer", "actionPaths"]);
-    const libs: Record<string, any> = {};
-    extraLibraries.forEach(config => (libs[config.accessor] = config.lib));
-    return { ...tree, ...cachedResponses, ...libs };
+    return tree;
   },
 );

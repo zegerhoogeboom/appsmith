@@ -6,6 +6,8 @@ import DropdownField from "components/editorComponents/form/fields/DropdownField
 import FormRow from "components/editorComponents/FormRow";
 import { BaseButton } from "components/designSystems/blueprint/ButtonComponent";
 import CalloutComponent from "components/designSystems/blueprint/CalloutComponent";
+import { PaginationType } from "entities/Action";
+
 interface PaginationProps {
   onTestClick: Function;
   paginationType: PaginationType;
@@ -14,12 +16,6 @@ const PaginationFieldWrapper = styled.div`
   display: flex;
   margin-bottom: 5px;
 `;
-
-export enum PaginationType {
-  "NONE" = "NONE",
-  "PAGE_NO" = "PAGE_NO",
-  "URL" = "URL",
-}
 
 const ExampleApi = styled.p`
   color: #ef7b63;
@@ -61,6 +57,7 @@ export default function Pagination(props: PaginationProps) {
         <DropdownField
           placeholder="Method"
           name="actionConfiguration.paginationType"
+          className="t--apiFormPaginationType"
           width={223}
           options={[
             {
@@ -86,8 +83,13 @@ export default function Pagination(props: PaginationProps) {
       >
         <StyledLabel>Previous url</StyledLabel>
         <PaginationFieldWrapper>
-          <StyledDynamicTextField name="actionConfiguration.prev" singleLine />
+          <StyledDynamicTextField
+            className="t--apiFormPaginationPrev"
+            name="actionConfiguration.prev"
+            singleLine
+          />
           <TestButton
+            className="t--apiFormPaginationPrevTest"
             accent="secondary"
             onClick={() => {
               props.onTestClick("PREV");
@@ -98,8 +100,13 @@ export default function Pagination(props: PaginationProps) {
         </PaginationFieldWrapper>
         <StyledLabel>Next url</StyledLabel>
         <PaginationFieldWrapper>
-          <StyledDynamicTextField name="actionConfiguration.next" singleLine />
+          <StyledDynamicTextField
+            className="t--apiFormPaginationNext"
+            name="actionConfiguration.next"
+            singleLine
+          />
           <TestButton
+            className="t--apiFormPaginationNextTest"
             accent="secondary"
             onClick={() => {
               props.onTestClick("NEXT");
@@ -120,12 +127,29 @@ export default function Pagination(props: PaginationProps) {
               marginBottom: "6px",
             }}
           >
-            Use Table pageNo and pageSize to configure the url.
+            1. Configure the Table pageNo in the API.
           </p>
           <ExampleApi>
-            http://api.example.com/users?pageNo={"{{Table.pageNo}}"}
-            &amp;pageSize={"{{Table.pageSize}}"}
+            http://api.example.com/users?pageNo={"{{Table1.pageNo}}"}
           </ExampleApi>
+        </CalloutComponent>
+        <CalloutComponent>
+          <p
+            style={{
+              marginBottom: "6px",
+            }}
+          >
+            2. Enable server side pagination in Table1
+          </p>
+        </CalloutComponent>
+        <CalloutComponent>
+          <p
+            style={{
+              marginBottom: "6px",
+            }}
+          >
+            3. Call this API onPageChange in Table1.
+          </p>
         </CalloutComponent>
       </PaginationTypeView>
     </React.Fragment>

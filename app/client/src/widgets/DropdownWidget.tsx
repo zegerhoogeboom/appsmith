@@ -63,6 +63,7 @@ class DropdownWidget extends BaseWidget<DropdownWidgetProps, WidgetState> {
       },
     };
   }
+
   static getDerivedPropertiesMap() {
     return {
       isValid: `{{this.isRequired ? this.selectionType === 'SINGLE_SELECT' ? !!this.selectedOption : !!this.selectedIndexArr && this.selectedIndexArr.length > 0 : true}}`,
@@ -70,6 +71,7 @@ class DropdownWidget extends BaseWidget<DropdownWidgetProps, WidgetState> {
       selectedOptionArr: `{{this.selectionType === "MULTI_SELECT" ? this.options.filter(opt => _.includes(this.selectedOptionValueArr, opt.value)) : undefined}}`,
       selectedIndex: `{{ _.findIndex(this.options, { value: this.selectedOption.value } ) }}`,
       selectedIndexArr: `{{ this.selectedOptionValueArr.map(o => _.findIndex(this.options, { value: o })) }}`,
+      value: `{{ this.selectionType === 'SINGLE_SELECT' ? this.selectedOptionValue : this.selectedOptionValueArr }}`,
     };
   }
 
@@ -98,13 +100,17 @@ class DropdownWidget extends BaseWidget<DropdownWidgetProps, WidgetState> {
     const selectedIndex = _.findIndex(this.props.options, {
       value: this.props.selectedOptionValue,
     });
-    const computedSelectedIndexArr = this.props.selectedOptionValueArr
-      .map((opt: string) =>
-        _.findIndex(this.props.options, {
-          value: opt,
-        }),
-      )
-      .filter((i: number) => i > -1);
+    const computedSelectedIndexArr = Array.isArray(
+      this.props.selectedOptionValueArr,
+    )
+      ? this.props.selectedOptionValueArr
+          .map((opt: string) =>
+            _.findIndex(this.props.options, {
+              value: opt,
+            }),
+          )
+          .filter((i: number) => i > -1)
+      : [];
 
     return (
       <DropDownComponent
@@ -116,7 +122,7 @@ class DropdownWidget extends BaseWidget<DropdownWidgetProps, WidgetState> {
         selectionType={this.props.selectionType}
         selectedIndex={selectedIndex > -1 ? selectedIndex : undefined}
         selectedIndexArr={computedSelectedIndexArr}
-        label={`${this.props.label}${this.props.isRequired ? " *" : ""}`}
+        label={`${this.props.label}`}
         isLoading={this.props.isLoading}
       />
     );
@@ -129,7 +135,6 @@ class DropdownWidget extends BaseWidget<DropdownWidgetProps, WidgetState> {
         selectedOption.value,
       );
     } else if (this.props.selectionType === "MULTI_SELECT") {
-      console.log(this.props, selectedOption);
       const isAlreadySelected = this.props.selectedOptionValueArr.includes(
         selectedOption.value,
       );

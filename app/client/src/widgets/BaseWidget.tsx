@@ -200,7 +200,11 @@ abstract class BaseWidget<
   makePositioned(content: ReactNode) {
     const style = this.getPositionStyle();
     return (
-      <PositionedContainer widgetId={this.props.widgetId} style={style}>
+      <PositionedContainer
+        widgetId={this.props.widgetId}
+        widgetType={this.props.type}
+        style={style}
+      >
         {content}
       </PositionedContainer>
     );
@@ -351,6 +355,7 @@ export interface WidgetProps extends WidgetDataProps {
   dynamicProperties?: Record<string, true>;
   invalidProps?: Record<string, boolean>;
   validationMessages?: Record<string, string>;
+  evaluatedValues?: Record<string, any>;
   isDefaultClickDisabled?: boolean;
   [key: string]: any;
 }

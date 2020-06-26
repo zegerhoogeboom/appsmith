@@ -59,6 +59,7 @@ class InputWidget extends BaseWidget<InputWidgetProps, InputWidgetState> {
   static getDerivedPropertiesMap(): DerivedPropertiesMap {
     return {
       isValid: `{{!!(this.isRequired ? this.text && this.text.length > 0 ? this.regex ? new RegExp(this.regex).test(this.text) : true : false : this.regex ? new RegExp(this.regex).test(this.text) : true)}}`,
+      value: `{{this.text}}`,
     };
   }
 
@@ -124,7 +125,6 @@ class InputWidget extends BaseWidget<InputWidgetProps, InputWidgetState> {
     if (this.props.maxChars) conditionalProps.maxChars = this.props.maxChars;
     if (this.props.maxNum) conditionalProps.maxNum = this.props.maxNum;
     if (this.props.minNum) conditionalProps.minNum = this.props.minNum;
-    if (this.props.isRequired) conditionalProps.label = `${this.props.label} *`;
     return (
       <InputComponent
         value={value}

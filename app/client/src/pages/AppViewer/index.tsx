@@ -12,11 +12,13 @@ import {
 import {
   ReduxActionTypes,
   PageListPayload,
+  ApplicationPayload,
 } from "constants/ReduxActionConstants";
 import {
   getPageList,
   getCurrentDSLPageId,
   getIsInitialized,
+  getEditorURL,
 } from "selectors/appViewSelectors";
 import { executeAction } from "actions/widgetActions";
 import { ExecuteActionPayload } from "constants/ActionConstants";
@@ -34,6 +36,7 @@ import {
 } from "actions/metaActions";
 import AppRoute from "pages/common/AppRoute";
 import { editorInitializer } from "utils/EditorUtils";
+import { PERMISSION_TYPE } from "pages/Applications/permissionHelpers";
 
 const AppViewWrapper = styled.div`
   margin-top: ${props => props.theme.headerHeight};
@@ -50,9 +53,11 @@ const AppViewerBody = styled.section`
 export type AppViewerProps = {
   currentDSLPageId?: string;
   currentLayoutId?: string;
+  currentApplication: ApplicationPayload | undefined;
   pages?: PageListPayload;
   initializeAppViewer: Function;
   isInitialized: boolean;
+  editorURL: string;
   executeAction: (actionPayload: ExecuteActionPayload) => void;
   updateWidgetProperty: (
     widgetId: string,
@@ -84,8 +89,10 @@ class AppViewer extends Component<
   }
 
   public render() {
-    const { isInitialized } = this.props;
+    const { isInitialized, currentApplication } = this.props;
+    const userPermissions = currentApplication?.userPermissions ?? [];
     if (!isInitialized) return null;
+
     const items: SideNavItemProps[] | undefined =
       this.props.pages &&
       this.props.pages.map(page => ({
@@ -99,6 +106,7 @@ class AppViewer extends Component<
         loading: false,
       }));
     if (!this.state.registered) return null;
+
     return (
       <EditorContext.Provider
         value={{
@@ -108,7 +116,11 @@ class AppViewer extends Component<
         }}
       >
         <AppViewWrapper>
-          <AppViewerHeader />
+          <AppViewerHeader
+            url={this.props.editorURL}
+            permissions={userPermissions || []}
+            permissionRequired={PERMISSION_TYPE.MANAGE_APPLICATION}
+          />
           <AppViewerBody>
             <AppViewerSideNavWrapper>
               <SideNav items={items} active={this.props.currentDSLPageId} />
@@ -133,6 +145,8 @@ const mapStateToProps = (state: AppState) => ({
   currentDSLPageId: getCurrentDSLPageId(state),
   pages: getPageList(state),
   isInitialized: getIsInitialized(state),
+  editorURL: getEditorURL(state),
+  currentApplication: state.ui.applications.currentApplication,
 });
 
 const mapDispatchToProps = (dispatch: any) => ({

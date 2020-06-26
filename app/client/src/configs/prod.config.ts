@@ -24,7 +24,14 @@ export const prodConfig = (baseUrl: string): AppsmithUIConfigs => ({
   apiUrl: "/api/",
   baseUrl,
   logLevel: "error",
-  featureFlags: [],
+  featureFlag: {
+    remoteConfig: {
+      optimizely: "Jq3K2kVdvuvxecHyHbVYcj",
+    },
+    default: {
+      lightningmenu: false,
+    },
+  },
 });
 
 export default prodConfig;

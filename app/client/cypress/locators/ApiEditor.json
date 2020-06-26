@@ -4,12 +4,20 @@
     "createBlankApiCard": ".t--createBlankApiCard",
     "eachProviderCard": ".t--eachProviderCard",
     "nameOfApi": ".t--nameOfApi",
-    "ApiNameField":"input[name='name']",
+    "ApiNameField": ".t--action-name-edit-field input",
     "addToPageBtn": ".t--addToPageBtn",
     "ApiDeleteBtn": ".t--apiFormDeleteBtn",
     "ApiRunBtn": ".t--apiFormRunBtn",
     "addToPageBtnsId": ".t--addToPageButtons",
     "ApiHomePage": ".t--apiHomePage",
     "formActionButtons": ".t--formActionButtons",
-    "dataSourceField": ".t--dataSourceField"
+    "dataSourceField": ".t--dataSourceField",
+    "responseBody": ".CodeMirror-code  span.cm-string.cm-property",
+    "ApiVerb": ".t--apiFormHttpMethod input",
+    "apiPaginationNextText": ".t--apiFormPaginationNext",
+    "apiPaginationPrevText": ".t--apiFormPaginationPrev",
+    "apiPaginationPrevTest": ".t--apiFormPaginationPrevTest",
+    "apiPaginationNextTest": ".t--apiFormPaginationNextTest",
+    "apiPaginationTab": ".t--apiFormPaginationType",
+    "apiTab": ".react-tabs__tab-list li"
 }

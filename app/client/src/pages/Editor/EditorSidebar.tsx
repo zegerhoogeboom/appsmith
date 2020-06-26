@@ -21,6 +21,7 @@ import TreeDropdown from "components/editorComponents/actioncreator/TreeDropdown
 import { theme } from "constants/DefaultTheme";
 import { Colors } from "constants/Colors";
 import { ControlIcons } from "icons/ControlIcons";
+import NotificationIcon from "components/designSystems/appsmith/NotificationIcon";
 
 const LoadingContainer = styled(CenteredWrapper)`
   height: 50%;
@@ -155,7 +156,7 @@ const ItemContainer = styled.div<{
   background-color: ${props =>
     props.isSelected || props.isBeingDragged
       ? props.theme.colors.paneCard
-      : props.theme.colors.paneBG}
+      : props.theme.colors.paneBG};
   :hover {
     background-color: ${props =>
       props.isDraggingOver
@@ -164,11 +165,7 @@ const ItemContainer = styled.div<{
   }
 `;
 
-const DraftIconIndicator = styled.span<{ isHidden: boolean }>`
-  width: 8px;
-  height: 8px;
-  border-radius: 8px;
-  background-color: #f2994a;
+const DraftIconIndicator = styled(NotificationIcon)<{ isHidden: boolean }>`
   margin: 0 5px;
   opacity: ${({ isHidden }) => (isHidden ? 0 : 1)};
 `;

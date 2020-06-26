@@ -33,18 +33,18 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
     },
     IMAGE_WIDGET: {
       defaultImage:
-        "https://www.cowgirlcontractcleaning.com/wp-content/uploads/sites/360/2018/05/placeholder-img-5.jpg",
+        "https://res.cloudinary.com/drako999/image/upload/v1589196259/default.png",
       imageShape: "RECTANGLE",
       image: "",
       rows: 3,
-      columns: 6,
+      columns: 4,
       widgetName: "Image",
     },
     INPUT_WIDGET: {
       inputType: "TEXT",
-      label: "Label",
       rows: 1,
-      columns: 10,
+      label: "",
+      columns: 5,
       widgetName: "Input",
     },
     // SWITCH_WIDGET: {
@@ -85,11 +85,11 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
       isDisabled: false,
       datePickerType: "DATE_PICKER",
       rows: 1,
-      dateFormat: "DD/MM/YYYY",
-      columns: 10,
-      label: "Date",
+      label: "",
+      dateFormat: "DD/MM/YYYY HH:mm",
+      columns: 5,
       widgetName: "DatePicker",
-      defaultDate: moment().toISOString(true),
+      defaultDate: moment().format("DD/MM/YYYY HH:mm"),
     },
     TABLE_WIDGET: {
       rows: 7,
@@ -118,35 +118,20 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
           productName: "Beef steak",
           orderAmount: 19.99,
         },
-        {
-          id: 7434532,
-          email: "byron.fields@reqres.in",
-          userName: "Byron Fields",
-          productName: "Chicken Sandwich",
-          orderAmount: 4.99,
-        },
-        {
-          id: 7434532,
-          email: "ryan.holmes@reqres.in",
-          userName: "Ryan Holmes",
-          productName: "Avocado Panini",
-          orderAmount: 7.99,
-        },
       ],
     },
     DROP_DOWN_WIDGET: {
       rows: 1,
-      columns: 10,
+      columns: 5,
+      label: "",
       selectionType: "SINGLE_SELECT",
-      label: "Select",
       options: [
-        { label: "Option 1", value: "1" },
-        { label: "Option 2", value: "2" },
-        { label: "Option 3", value: "3" },
-        { label: "Option 4", value: "4" },
-        { label: "Option 5", value: "5" },
+        { label: "Vegetarian", value: "VEG" },
+        { label: "Non-Vegetarian", value: "NON_VEG" },
+        { label: "Vegan", value: "VEGAN" },
       ],
       widgetName: "Dropdown",
+      defaultOptionValue: "VEG",
     },
     CHECKBOX_WIDGET: {
       rows: 1,
@@ -158,13 +143,12 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
     RADIO_GROUP_WIDGET: {
       rows: 2,
       columns: 3,
-      label: "Label",
+      label: "",
       options: [
-        { id: "1", label: "Alpha", value: "1" },
-        { id: "2", label: "Bravo", value: "2" },
-        { id: "3", label: "Charlie", value: "3" },
+        { id: "1", label: "Male", value: "M" },
+        { id: "2", label: "Female", value: "F" },
       ],
-      defaultOptionValue: "1",
+      defaultOptionValue: "M",
       widgetName: "RadioGroup",
     },
     ALERT_WIDGET: {
@@ -181,6 +165,8 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
       files: [],
       label: "Select Files",
       columns: 4,
+      maxNumFiles: 1,
+      maxFileSize: 5,
       widgetName: "FilePicker",
       isDefaultClickDisabled: true,
     },
@@ -250,8 +236,8 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
                 view: [
                   {
                     type: "ICON_WIDGET",
-                    position: { left: 15, top: 0 },
-                    size: { rows: 1, cols: 1 },
+                    position: { left: 14, top: 0 },
+                    size: { rows: 1, cols: 2 },
                     props: {
                       iconName: "cross",
                       iconSize: 24,
@@ -261,7 +247,7 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
                   {
                     type: "TEXT_WIDGET",
                     position: { left: 0, top: 0 },
-                    size: { rows: 1, cols: 15 },
+                    size: { rows: 1, cols: 10 },
                     props: {
                       text: "Modal Title",
                       textStyle: "HEADING",
@@ -331,7 +317,7 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
       allowHorizontalScroll: false,
       chartData: [
         {
-          seriesName: "",
+          seriesName: "Sales",
           data: [
             {
               x: "Mon",
@@ -376,7 +362,7 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
     },
     FORM_WIDGET: {
       rows: 13,
-      columns: 6,
+      columns: 7,
       widgetName: "Form",
       backgroundColor: "white",
       children: [],
@@ -397,7 +383,7 @@ const WidgetConfigResponse: WidgetConfigReducerState = {
                     size: { rows: 1, cols: 12 },
                     position: { top: 0, left: 0 },
                     props: {
-                      text: "Title",
+                      text: "Form",
                       textStyle: "HEADING",
                     },
                   },

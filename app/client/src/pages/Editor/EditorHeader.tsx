@@ -20,12 +20,14 @@ import {
   getOnSelectAction,
 } from "pages/common/CustomizedDropdown/dropdownHelpers";
 import AnalyticsUtil from "utils/AnalyticsUtil";
+import { Skin } from "constants/DefaultTheme";
+import { HelpModal } from "components/designSystems/appsmith/help/HelpModal";
 
 const LoadingContainer = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  flex-grow: 1;
+  flex-shrink: 1;
   margin: 0 10px;
 `;
 
@@ -44,6 +46,12 @@ const StretchedBreadCrumb = styled(Breadcrumbs)`
       font-size: ${props => props.theme.fontSizes[2]}px;
     }
   }
+`;
+
+const InviteButton = styled.div`
+  display: flex;
+  flex-grow: 1;
+  justify-content: flex-end;
 `;
 
 type EditorHeaderProps = {
@@ -79,7 +87,8 @@ export const EditorHeader = (props: EditorHeaderProps) => {
               <Button
                 text="Manage Pages"
                 icon="page-layout"
-                iconAlignment="left"
+                iconAlignment={Directions.LEFT}
+                skin={Skin.LIGHT}
               />
             ),
             onSelect: () =>
@@ -137,7 +146,9 @@ export const EditorHeader = (props: EditorHeaderProps) => {
     <StyledHeader>
       <StretchedBreadCrumb items={navigation} minVisibleItems={3} />
       <CustomizedDropdown {...pageSelectorData} />
-
+      <InviteButton>
+        {/* <Button text="Share" intent="primary" filled size="small" /> */}
+      </InviteButton>
       <LoadingContainer>{saveStatusMessage}</LoadingContainer>
       <PreviewPublishSection>
         <Button
@@ -150,6 +161,7 @@ export const EditorHeader = (props: EditorHeaderProps) => {
           className="t--application-publish-btn"
         />
       </PreviewPublishSection>
+      <HelpModal></HelpModal>
     </StyledHeader>
   );
 };

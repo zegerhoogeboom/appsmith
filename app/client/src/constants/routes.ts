@@ -1,5 +1,4 @@
 import { MenuIcons } from "icons/MenuIcons";
-import { FeatureFlagEnum } from "utils/featureFlags";
 
 export const BASE_URL = "/";
 export const ORG_URL = "/org";
@@ -174,7 +173,6 @@ export const EDITOR_ROUTES = [
     path: QUERIES_EDITOR_URL,
     title: "Queries",
     exact: false,
-    flag: FeatureFlagEnum.QueryPane,
   },
   {
     icon: MenuIcons.DATASOURCES_ICON,
@@ -182,7 +180,7 @@ export const EDITOR_ROUTES = [
     path: DATA_SOURCES_EDITOR_URL,
     title: "Datasources",
     exact: false,
-    flag: FeatureFlagEnum.DatasourcePane,
+    allowed: true,
   },
   {
     icon: MenuIcons.PAGES_ICON,

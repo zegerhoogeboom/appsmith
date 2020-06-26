@@ -8,6 +8,7 @@ import { QUERY_CONSTANT } from "constants/QueryEditorConstants";
 import { API_CONSTANT } from "constants/ApiEditorConstants";
 import { createSelector } from "reselect";
 import { Page } from "constants/ReduxActionConstants";
+import { Datasource } from "api/DatasourcesApi";
 
 export const getEntities = (state: AppState): AppState["entities"] =>
   state.entities;
@@ -107,6 +108,20 @@ export const getActions = (state: AppState): ActionDataState =>
 export const getDatasourceRefs = (state: AppState): any =>
   state.ui.datasourcePane.datasourceRefs;
 
+export const getDatasource = (
+  state: AppState,
+  datasourceId: string,
+): Partial<Datasource> | undefined =>
+  state.entities.datasources.list.find(
+    datasource => datasource.id === datasourceId,
+  );
+
+export const getDatasourceDraft = (state: AppState, id: string) => {
+  const drafts = state.ui.datasourcePane.drafts;
+  if (id in drafts) return drafts[id];
+  return {};
+};
+
 export const getPlugins = (state: AppState) => state.entities.plugins.list;
 
 export const getApiActions = (state: AppState): ActionDataState => {
@@ -139,11 +154,9 @@ export const getQueryActions = (state: AppState): ActionDataState => {
 const getCurrentPageId = (state: AppState) =>
   state.entities.pageList.currentPageId;
 
-export const getDatasourcePlugins = (state: AppState) => {
-  return state.entities.plugins.list.filter(
-    plugin => plugin?.allowUserDatasources ?? true,
-  );
-};
+export const getDatasourcePlugins = createSelector(getPlugins, plugins => {
+  return plugins.filter(plugin => plugin?.allowUserDatasources ?? true);
+});
 
 export const getActionsForCurrentPage = createSelector(
   getCurrentPageId,
@@ -154,13 +167,14 @@ export const getActionsForCurrentPage = createSelector(
   },
 );
 
-export const getActionResponses = (
-  state: AppState,
-): Record<string, ActionResponse | undefined> => {
+export const getActionDrafts = (state: AppState) => state.entities.actionDrafts;
+
+export const getActionResponses = createSelector(getActions, actions => {
   const responses: Record<string, ActionResponse | undefined> = {};
-  state.entities.actions.forEach(a => {
+
+  actions.forEach(a => {
     responses[a.config.id] = a.data;
   });
 
   return responses;
-};
+});

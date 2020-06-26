@@ -26,28 +26,34 @@ import {
   getCurrentApplicationId,
   getCurrentPageId,
 } from "selectors/editorSelectors";
-import { initialize } from "redux-form";
-import { getAction, getActionParams, getActionTimeout } from "./ActionSagas";
+import { change, initialize } from "redux-form";
+import {
+  extractBindingsFromAction,
+  getAction,
+  getActionParams,
+  getActionTimeout,
+} from "./ActionSagas";
 import { AppState } from "reducers";
 import ActionAPI, {
-  RestAction,
   PaginationField,
   ExecuteActionRequest,
   ActionApiResponse,
+  Property,
 } from "api/ActionAPI";
 import { QUERY_CONSTANT } from "constants/QueryEditorConstants";
 import { changeQuery, deleteQuerySuccess } from "actions/queryPaneActions";
 import { AppToaster } from "components/editorComponents/ToastComponent";
 import { ToastType } from "react-toastify";
 import { PageAction } from "constants/ActionConstants";
-import { isDynamicValue, getDynamicBindings } from "utils/DynamicBindingUtils";
+import { isDynamicValue } from "utils/DynamicBindingUtils";
 import AnalyticsUtil from "utils/AnalyticsUtil";
 import { GenericApiResponse } from "api/ApiResponses";
 import { validateResponse } from "./ErrorSagas";
 import { getQueryName } from "selectors/entitiesSelector";
+import { QueryAction, RestAction } from "entities/Action";
 
 const getQueryDraft = (state: AppState, id: string) => {
-  const drafts = state.ui.apiPane.drafts;
+  const drafts = state.entities.actionDrafts;
   if (id in drafts) return drafts[id];
   return {};
 };
@@ -56,6 +62,9 @@ const getActions = (state: AppState) =>
   state.entities.actions.map(a => a.config);
 
 const getLastUsedAction = (state: AppState) => state.ui.queryPane.lastUsed;
+
+const getQueryCreationStatus = (state: AppState) =>
+  state.ui.queryPane.isCreating;
 
 function* initQueryPaneSaga(
   actionPayload: ReduxAction<{
@@ -70,6 +79,7 @@ function* initQueryPaneSaga(
   }
   const urlId = actionPayload.payload.id;
   const lastUsedId = yield select(getLastUsedAction);
+  const isCreating = yield select(getQueryCreationStatus);
 
   let id = "";
   if (urlId) {
@@ -77,6 +87,8 @@ function* initQueryPaneSaga(
   } else if (lastUsedId) {
     id = lastUsedId;
   }
+
+  if (isCreating) return;
 
   yield put(changeQuery(id, QUERY_CONSTANT));
 }
@@ -128,12 +140,39 @@ function* updateDraftsSaga() {
   }
 }
 
+function* updateDynamicBindingsSaga(
+  actionPayload: ReduxActionWithMeta<string, { field: string }>,
+) {
+  const field = actionPayload.meta.field;
+  if (field === "dynamicBindingPathList") return;
+  const value = actionPayload.payload;
+  const { values } = yield select(getFormData, QUERY_EDITOR_FORM_NAME);
+  if (!values.id) return;
+
+  const isDynamic = isDynamicValue(value);
+  let dynamicBindings: Property[] = values.dynamicBindingPathList || [];
+  const fieldExists = _.some(dynamicBindings, { key: field });
+
+  if (!isDynamic && fieldExists) {
+    dynamicBindings = dynamicBindings.filter(d => d.key !== field);
+  }
+  if (isDynamic && !fieldExists) {
+    dynamicBindings.push({ key: field });
+  }
+  yield put(
+    change(QUERY_EDITOR_FORM_NAME, "dynamicBindingPathList", dynamicBindings),
+  );
+}
+
 function* formValueChangeSaga(
   actionPayload: ReduxActionWithMeta<string, { field: string; form: string }>,
 ) {
   const { form } = actionPayload.meta;
   if (form !== QUERY_EDITOR_FORM_NAME) return;
-  yield all([call(updateDraftsSaga)]);
+  yield all([
+    call(updateDynamicBindingsSaga, actionPayload),
+    call(updateDraftsSaga),
+  ]);
 }
 
 function* handleQueryCreatedSaga(actionPayload: ReduxAction<RestAction>) {
@@ -179,7 +218,7 @@ function* handleMoveOrCopySaga(actionPayload: ReduxAction<{ id: string }>) {
 
 export function* executeQuerySaga(
   actionPayload: ReduxAction<{
-    action: RestAction;
+    action: QueryAction;
     actionId: string;
     paginationField: PaginationField;
   }>,
@@ -189,7 +228,7 @@ export function* executeQuerySaga(
       values,
       dirty,
     }: {
-      values: RestAction;
+      values: QueryAction;
       dirty: boolean;
       valid: boolean;
     } = yield select(getFormData, QUERY_EDITOR_FORM_NAME);
@@ -198,16 +237,8 @@ export function* executeQuerySaga(
     let jsonPathKeys = actionObject.jsonPathKeys;
 
     if (dirty) {
-      action = _.omit(values, "id") as RestAction;
-
-      const actionString = JSON.stringify(action);
-      if (isDynamicValue(actionString)) {
-        const { jsSnippets } = getDynamicBindings(actionString);
-        // Replace cause the existing keys could have been updated
-        jsonPathKeys = jsSnippets.filter(jsSnippet => !!jsSnippet);
-      } else {
-        jsonPathKeys = [];
-      }
+      action = _.omit(values, "id") as QueryAction;
+      jsonPathKeys = extractBindingsFromAction(action as QueryAction);
     }
 
     const { paginationField } = actionPayload.payload;
@@ -222,30 +253,35 @@ export function* executeQuerySaga(
       },
       timeout,
     );
+    const isValidResponse = yield validateResponse(response);
+    const isExecutionSuccess = response.data.isExecutionSuccess;
 
-    if (response.responseMeta && response.responseMeta.error) {
-      throw response.responseMeta.error;
+    if (!isExecutionSuccess) {
+      throw Error(response.data.body.toString());
     }
 
-    yield put({
-      type: ReduxActionTypes.RUN_QUERY_SUCCESS,
-      payload: {
-        data: response.data,
-        actionId: actionPayload.payload.actionId,
-      },
-    });
-    AppToaster.show({
-      message: "Query ran successfully",
-      type: ToastType.SUCCESS,
-    });
-    AnalyticsUtil.logEvent("RUN_QUERY", {
-      queryName: actionPayload.payload.action.name,
-    });
+    if (isValidResponse) {
+      yield put({
+        type: ReduxActionTypes.RUN_QUERY_SUCCESS,
+        payload: {
+          data: response.data,
+          actionId: actionPayload.payload.actionId,
+        },
+      });
+      AppToaster.show({
+        message: "Query ran successfully",
+        type: ToastType.SUCCESS,
+      });
+      AnalyticsUtil.logEvent("RUN_QUERY", {
+        queryName: actionPayload.payload.action.name,
+      });
+    }
   } catch (error) {
     yield put({
       type: ReduxActionErrorTypes.RUN_QUERY_ERROR,
       payload: {
         actionId: actionPayload.payload.actionId,
+        message: error.message,
         show: false,
       },
     });

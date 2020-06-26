@@ -4,13 +4,12 @@ import {
   ReduxActionErrorTypes,
   ReduxAction,
 } from "constants/ReduxActionConstants";
-import { RestAction } from "api/ActionAPI";
-import _ from "lodash";
+import { RestAction } from "entities/Action";
 
 const initialState: ApiPaneReduxState = {
   lastUsed: "",
+  isCreating: false,
   isFetching: false,
-  drafts: {},
   isRunning: {},
   isSaving: {},
   isDeleting: {},
@@ -18,17 +17,19 @@ const initialState: ApiPaneReduxState = {
   lastUsedEditorPage: "",
   lastSelectedPage: "",
   extraformData: {},
+  datasourceFieldText: {},
 };
 
 export interface ApiPaneReduxState {
   lastUsed: string;
+  isCreating: boolean;
   isFetching: boolean;
-  drafts: Record<string, RestAction>;
   isRunning: Record<string, boolean>;
   isSaving: Record<string, boolean>;
   isDeleting: Record<string, boolean>;
   currentCategory: string;
   lastUsedEditorPage: string;
+  datasourceFieldText: Record<string, string>;
   lastSelectedPage: string;
   extraformData: Record<string, any>;
 }
@@ -45,6 +46,24 @@ const apiPaneReducer = createReducer(initialState, {
   [ReduxActionErrorTypes.FETCH_ACTIONS_ERROR]: (state: ApiPaneReduxState) => ({
     ...state,
     isFetching: false,
+  }),
+  [ReduxActionTypes.CREATE_ACTION_INIT]: (
+    state: ApiPaneReduxState,
+  ): ApiPaneReduxState => ({
+    ...state,
+    isCreating: true,
+  }),
+  [ReduxActionTypes.CREATE_ACTION_SUCCESS]: (
+    state: ApiPaneReduxState,
+  ): ApiPaneReduxState => ({
+    ...state,
+    isCreating: false,
+  }),
+  [ReduxActionErrorTypes.CREATE_ACTION_ERROR]: (
+    state: ApiPaneReduxState,
+  ): ApiPaneReduxState => ({
+    ...state,
+    isCreating: false,
   }),
   [ReduxActionTypes.RUN_API_REQUEST]: (
     state: ApiPaneReduxState,
@@ -139,23 +158,6 @@ const apiPaneReducer = createReducer(initialState, {
       [action.payload.id]: false,
     },
   }),
-  [ReduxActionTypes.UPDATE_API_DRAFT]: (
-    state: ApiPaneReduxState,
-    action: ReduxAction<{ id: string; draft: Partial<RestAction> }>,
-  ) => ({
-    ...state,
-    drafts: {
-      ...state.drafts,
-      [action.payload.id]: action.payload.draft,
-    },
-  }),
-  [ReduxActionTypes.DELETE_API_DRAFT]: (
-    state: ApiPaneReduxState,
-    action: ReduxAction<{ id: string }>,
-  ) => ({
-    ...state,
-    drafts: _.omit(state.drafts, action.payload.id),
-  }),
   [ReduxActionTypes.API_PANE_CHANGE_API]: (
     state: ApiPaneReduxState,
     action: ReduxAction<{ id: string }>,
@@ -198,6 +200,19 @@ const apiPaneReducer = createReducer(initialState, {
       extraformData: {
         ...state.extraformData,
         [id]: values,
+      },
+    };
+  },
+  [ReduxActionTypes.SET_DATASOURCE_FIELD_TEXT]: (
+    state: ApiPaneReduxState,
+    action: ReduxAction<{ apiId: string; value: string }>,
+  ) => {
+    const { apiId } = action.payload;
+    return {
+      ...state,
+      datasourceFieldText: {
+        ...state.datasourceFieldText,
+        [apiId]: action.payload.value,
       },
     };
   },

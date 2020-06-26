@@ -27,6 +27,7 @@ interface ComponentState {
 interface ComponentProps {
   children: any;
   title: string;
+  defaultIsOpen: boolean;
 }
 
 type Props = ComponentProps;
@@ -36,12 +37,13 @@ class Collapsible extends React.Component<Props, ComponentState> {
     super(props);
 
     this.state = {
-      isOpen: true,
+      isOpen: props.defaultIsOpen || false,
     };
   }
 
   render() {
     const { children, title } = this.props;
+    const { isOpen } = this.state;
 
     return (
       <>
@@ -53,11 +55,12 @@ class Collapsible extends React.Component<Props, ComponentState> {
           }}
         />
         <SectionContainer
+          data-cy={`section-${title}`}
           onClick={() => this.setState({ isOpen: !this.state.isOpen })}
         >
           <SectionLabel>{title}</SectionLabel>
           <Icon
-            icon={"chevron-down"}
+            icon={isOpen ? "chevron-up" : "chevron-down"}
             iconSize={16}
             style={{ color: "#2E3D49" }}
           />

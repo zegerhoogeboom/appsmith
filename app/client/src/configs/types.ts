@@ -1,5 +1,4 @@
 import { LogLevelDesc } from "loglevel";
-import { FeatureFlagEnum } from "utils/featureFlags";
 
 export type SentryConfig = {
   dsn: string;
@@ -11,6 +10,21 @@ export type HotjarConfig = {
   sv: string;
 };
 
+type Milliseconds = number;
+
+export enum FeatureFlagsEnum {
+  LightningMenu = "lightningmenu",
+}
+
+export type FeatureFlags = Record<FeatureFlagsEnum, boolean>;
+
+export type FeatureFlagConfig = {
+  remoteConfig?: {
+    optimizely: string;
+  };
+  default: FeatureFlags;
+};
+
 export type AppsmithUIConfigs = {
   sentry: {
     enabled: boolean;
@@ -20,6 +34,7 @@ export type AppsmithUIConfigs = {
     enabled: boolean;
     config?: HotjarConfig;
   };
+  featureFlag: FeatureFlagConfig;
   segment: {
     enabled: boolean;
     key: string;
@@ -27,5 +42,4 @@ export type AppsmithUIConfigs = {
   apiUrl: string;
   baseUrl: string;
   logLevel: LogLevelDesc;
-  featureFlags: Array<FeatureFlagEnum>;
 };

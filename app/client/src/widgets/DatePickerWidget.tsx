@@ -34,6 +34,7 @@ class DatePickerWidget extends BaseWidget<DatePickerWidgetProps, WidgetState> {
   static getDerivedPropertiesMap(): DerivedPropertiesMap {
     return {
       isValid: `{{ this.isRequired ? !!this.selectedDate : true }}`,
+      value: `{{ this.selectedDate }}`,
     };
   }
 
@@ -58,8 +59,8 @@ class DatePickerWidget extends BaseWidget<DatePickerWidgetProps, WidgetState> {
   getPageView() {
     return (
       <DatePickerComponent
-        label={`${this.props.label}${this.props.isRequired ? " *" : ""}`}
-        dateFormat={"DD/MM/YYYY HH:mm"}
+        label={`${this.props.label}`}
+        dateFormat={this.props.dateFormat}
         widgetId={this.props.widgetId}
         isDisabled={this.props.isDisabled}
         datePickerType={"DATE_PICKER"}
