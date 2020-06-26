@@ -176,7 +176,7 @@ Cypress.Commands.add("CreateAPI", apiname => {
     .first()
     .click({ force: true });
   cy.get(apiwidget.createapi).click({ force: true });
-  //cy.wait("@createNewApi");
+  cy.wait("@createNewApi");
   //cy.wait("@getUser");
   cy.get(apiwidget.resourceUrl).should("be.visible");
   cy.xpath(apiwidget.EditApiName).click();
