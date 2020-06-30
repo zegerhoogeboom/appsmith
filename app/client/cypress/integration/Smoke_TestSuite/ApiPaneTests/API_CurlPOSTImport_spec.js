@@ -14,7 +14,6 @@ describe("Test curl import flow", function() {
       },
     );
     cy.importCurl();
-    //cy.xpath(apiwidget.EditApiName).should("be.visible");
     cy.RunAPI();
     cy.ResponseStatusCheck("201 CREATED");
     cy.get("@curlImport").then(response => {
