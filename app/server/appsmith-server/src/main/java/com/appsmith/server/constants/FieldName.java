@@ -10,6 +10,7 @@ public class FieldName {
     public static final String NAME = "name";
     public static String PAGE_ID = "pageId";
     public static String LAYOUT_ID = "layoutId";
+    public static String APPLICATION = "application";
     public static String APPLICATION_ID = "applicationId";
     public static String DATASOURCE = "datasource";
     public static String CONFIG = "config";

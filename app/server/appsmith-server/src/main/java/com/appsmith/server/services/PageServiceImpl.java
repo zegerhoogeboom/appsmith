@@ -59,7 +59,8 @@ public class PageServiceImpl extends BaseService<PageRepository, Page, String> i
 
     @Override
     public Flux<Page> findByApplicationId(String applicationId) {
-        return repository.findByApplicationId(applicationId, AclPermission.READ_PAGES);
+        return repository.findByApplicationId(applicationId, AclPermission.READ_PAGES)
+                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.ACL_NO_RESOURCE_FOUND, "page by application id", applicationId)));
     }
 
     @Override
@@ -69,7 +70,8 @@ public class PageServiceImpl extends BaseService<PageRepository, Page, String> i
 
     @Override
     public Mono<Page> findByIdAndLayoutsId(String pageId, String layoutId, AclPermission aclPermission) {
-        return repository.findByIdAndLayoutsId(pageId, layoutId, aclPermission);
+        return repository.findByIdAndLayoutsId(pageId, layoutId, aclPermission)
+                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.ACL_NO_RESOURCE_FOUND, FieldName.PAGE, pageId)));
     }
 
     @Override
@@ -136,7 +138,7 @@ public class PageServiceImpl extends BaseService<PageRepository, Page, String> i
     @Override
     public Mono<ApplicationPagesDTO> findNamesByApplicationId(String applicationId) {
         Mono<Application> applicationMono = applicationService.findById(applicationId, AclPermission.READ_APPLICATIONS)
-                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.NO_RESOURCE_FOUND, FieldName.APPLICATION_ID, applicationId)))
+                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.ACL_NO_RESOURCE_FOUND, FieldName.APPLICATION, applicationId)))
                 .cache();
 
         Mono<List<PageNameIdDTO>> pagesListMono = applicationMono
@@ -157,7 +159,7 @@ public class PageServiceImpl extends BaseService<PageRepository, Page, String> i
     @Override
     public Mono<ApplicationPagesDTO> findNamesByApplicationName(String applicationName) {
         Mono<Application> applicationMono = applicationService.findByName(applicationName, AclPermission.READ_APPLICATIONS)
-                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.NO_RESOURCE_FOUND, FieldName.NAME, applicationName)))
+                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.ACL_NO_RESOURCE_FOUND, FieldName.APPLICATION, applicationName)))
                 .cache();
 
         Mono<List<PageNameIdDTO>> pagesListMono = applicationMono

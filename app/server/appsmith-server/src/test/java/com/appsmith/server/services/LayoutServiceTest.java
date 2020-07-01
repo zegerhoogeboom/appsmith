@@ -214,7 +214,7 @@ public class LayoutServiceTest {
         StepVerifier
                 .create(updatedLayoutMono)
                 .expectErrorMatches(throwable -> throwable instanceof AppsmithException &&
-                        throwable.getMessage().equals(AppsmithError.INVALID_PARAMETER.getMessage(FieldName.PAGE_ID + " or " + FieldName.LAYOUT_ID)))
+                        ((AppsmithException) throwable).getError().equals(AppsmithError.ACL_NO_RESOURCE_FOUND))
                 .verify();
     }
 

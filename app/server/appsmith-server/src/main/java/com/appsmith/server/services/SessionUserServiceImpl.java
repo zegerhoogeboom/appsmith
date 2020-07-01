@@ -15,7 +15,6 @@ public class SessionUserServiceImpl implements SessionUserService {
 
         return ReactiveSecurityContextHolder.getContext()
                 .map(ctx -> ctx.getAuthentication())
-                .map(auth -> auth.getPrincipal())
-                .map(principal -> (User) principal);
+                .map(auth -> (User) auth.getPrincipal());
     }
 }

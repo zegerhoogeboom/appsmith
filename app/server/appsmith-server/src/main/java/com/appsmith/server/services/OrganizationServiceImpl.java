@@ -265,7 +265,7 @@ public class OrganizationServiceImpl extends BaseService<OrganizationRepository,
     public Mono<List<UserRole>> getOrganizationMembers(String orgId) {
         return repository
                 .findById(orgId, MANAGE_ORGANIZATIONS)
-                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.NO_RESOURCE_FOUND, FieldName.ORGANIZATION, orgId)))
+                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.ACL_NO_RESOURCE_FOUND, FieldName.ORGANIZATION, orgId)))
                 .map(organization -> {
                     final List<UserRole> userRoles = organization.getUserRoles();
                     return CollectionUtils.isEmpty(userRoles) ? Collections.emptyList() : userRoles;
