@@ -331,7 +331,7 @@ Cypress.Commands.add("CreateAPI", apiname => {
     .type(apiname)
     .should("have.value", apiname)
     .blur();
-  //cy.WaitAutoSave();
+  cy.WaitAutoSave();
   // Added because api name edit takes some time to
   // reflect in api sidebar after the call passes.
   cy.wait(2000);
@@ -363,7 +363,7 @@ Cypress.Commands.add("EditApiName", apiname => {
 Cypress.Commands.add("WaitAutoSave", () => {
   // wait for save query to trigger
   cy.wait(200);
-  cy.wait("@saveQuery");
+  cy.wait("@saveAction");
   //cy.wait("@postExecute");
 });
 
