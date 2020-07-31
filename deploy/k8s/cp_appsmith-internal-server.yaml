@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: appsmith-internal-server
+spec:
+  clusterIP: None
+  ports:
+  - name: appsmith-internal-server
+    port: 8080
+  selector:
+    app: appsmith
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appsmith
+  labels:
+    app: appsmith-internal-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appsmith
+  template:
+    metadata:
+      labels:
+        app: appsmith
+    spec:
+      containers:
+      - name: nginx
+        image: appsmith/appsmith-editor
+        env:
+        - name: APPSMITH_MAIL_ENABLED
+          value: "false"
+        - name: APPSMITH_REDIS_URL
+          value: "redis://redis:6379"
+        - name: APPSMITH_MONGODB_URI
+          value: "mongodb://afdasdf:adfasf@mongo/appsmith?retryWrites=true"
+        - name: APPSMITH_ENCRYPTION_PASSWORD
+          value: "SLoleI1L90XUU"
+        - name: APPSMITH_ENCRYPTION_SALT
+          value: "lPGX74Vc9R8dY"
+        command: ["/bin/sh"]
+        args: ["-c", "while :; do sleep 6h & wait $${!}; nginx -s reload; done", "/start-nginx.sh"]
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        volumeMounts:
+        - mountPath: app.conf.template
+          name: nginx
+        - mountPath: /var/www/certbot
+          name: certbot-www
+        - mountPath: /etc/letsencrypt
+          name: certbot-conf
+      - name: certbot
+        image: certbot/certbot
+        command: ["/bin/sh"]
+        args: ["-c", "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;"]
+        volumeMounts:
+        - mountPath: /etc/letsencrypt
+          name: certbot-conf
+        - mountPath: /var/www/certbot
+          name: certbot-www 
+      - name: appsmith-internal-server
+        image: appsmith/appsmith-server:latest
+        env:
+        - name: APPSMITH_MAIL_ENABLED
+          value: "false"
+        - name: APPSMITH_REDIS_URL
+          value: "redis://redis:6379"
+        - name: APPSMITH_MONGODB_URI
+          value: "mongodb://afdasdf:adfasf@mongo/appsmith?retryWrites=true"
+        - name: APPSMITH_ENCRYPTION_PASSWORD
+          value: "SLoleI1L90XUU"
+        - name: APPSMITH_ENCRYPTION_SALT
+          value: "lPGX74Vc9R8dY"
+        ports:
+        - containerPort: 8080
+      - name: redis
+        image: redis
+        ports:
+        - containerPort: 6379
+
+      volumes:
+      - name: nginx
+        hostPath:
+          path: /Users/vibhor/Documents/manish/Project/appsmith/k8s/volume/nginx/app.conf.template
+          type: FileOrCreate
+      - name: certbot-www
+        hostPath:
+          path: /Users/vibhor/Documents/manish/Project/appsmith/k8s/volume/certbot/www
+          type: DirectoryOrCreate
+      - name: certbot-conf
+        hostPath:
+          path: /Users/vibhor/Documents/manish/Project/appsmith/k8s/volume/certbot/conf
+          type: DirectoryOrCreate
