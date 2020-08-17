@@ -13,6 +13,7 @@ import org.springframework.security.oauth2.client.userinfo.ReactiveOAuth2UserSer
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 /**
@@ -27,6 +28,7 @@ public class CustomOAuth2UserServiceImpl extends DefaultReactiveOAuth2UserServic
 
     private UserRepository repository;
     private UserService userService;
+    private WebClient webClient = WebClient.create();
 
     @Autowired
     public CustomOAuth2UserServiceImpl(UserRepository repository, UserService userService) {
@@ -37,8 +39,14 @@ public class CustomOAuth2UserServiceImpl extends DefaultReactiveOAuth2UserServic
     @Override
     public Mono<OAuth2User> loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         Mono<OAuth2User> oauth2UserMono = super.loadUser(userRequest);
+        if (!"github".equals(userRequest.getClientRegistration().getRegistrationId())) {
+            return oauth2UserMono.flatMap(oAuth2User -> checkAndCreateUser(oAuth2User, userRequest));
+        }
+//        OAuth2AuthorizedClient client = new OAuth2AuthorizedClient(userRequest.getClientRegistration(), )
+        return oauth2UserMono.flatMap(oAuth2User -> {
 
-        return oauth2UserMono.flatMap(oAuth2User -> checkAndCreateUser(oAuth2User, userRequest));
+            return checkAndCreateUser(oAuth2User, userRequest);
+        });
     }
 
     /**
