@@ -10,6 +10,7 @@ import com.appsmith.server.domains.Organization;
 import com.appsmith.server.domains.Page;
 import com.appsmith.server.domains.Plugin;
 import com.appsmith.server.domains.User;
+import com.appsmith.server.dtos.DslActionDTO;
 import com.appsmith.server.helpers.MockPluginExecutor;
 import com.appsmith.server.helpers.PluginExecutorHelper;
 import com.appsmith.server.repositories.OrganizationRepository;
@@ -31,6 +32,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -97,7 +100,7 @@ public class LayoutActionServiceTest {
             testPage = pageService.getById(pageId).block();
 
             Layout layout = testPage.getLayouts().get(0);
-            JSONObject dsl = new JSONObject(Map.of("text", "{{ query1.data }}"));
+            JSONObject dsl = new JSONObject(Map.of("text", "{{ query1.data + query2.data}}"));
             layout.setDsl(dsl);
             layout.setPublishedDsl(dsl);
             layoutActionService.updateLayout(pageId, layout.getId(), layout).block();
@@ -132,7 +135,7 @@ public class LayoutActionServiceTest {
         action.setName("query1");
         action.setPageId(testPage.getId());
         ActionConfiguration actionConfiguration = new ActionConfiguration();
-        actionConfiguration.setHttpMethod(HttpMethod.GET);
+//        actionConfiguration.setHttpMethod(HttpMethod.GET);
         action.setActionConfiguration(actionConfiguration);
         action.setDatasource(datasource);
 
@@ -155,5 +158,130 @@ public class LayoutActionServiceTest {
                     assertThat(page.getLayouts().get(0).getLayoutOnLoadActions().get(0).iterator().next().getName()).isEqualTo("query1");
                 })
                 .verifyComplete();
+    }
+
+//    @Test
+//    @WithUserDetails(value = "api_user")
+//    public void validSetPageLoadFalse() {
+//        Mockito.when(pluginExecutorHelper.getPluginExecutor(Mockito.any())).thenReturn(Mono.just(new MockPluginExecutor()));
+//
+//        Action action = new Action();
+//        action.setName("query2");
+//        action.setPageId(testPage.getId());
+//        ActionConfiguration actionConfiguration = new ActionConfiguration();
+//        actionConfiguration.setHttpMethod(HttpMethod.GET);
+//        action.setActionConfiguration(actionConfiguration);
+//        action.setDatasource(datasource);
+//        Action savedAction = actionService.create(action).block();
+//        log.debug("Init saved action : {}", savedAction);
+//        Action updates = new Action();
+//        updates.setExecuteOnLoad(true);
+//        updates.setPolicies(null);
+//        updates.setUserPermissions(null);
+//
+//        Mono<Page> actionBeforeMono =  layoutActionService.updateAction(savedAction.getId(), updates)
+//                .map(action1 -> {
+//                    log.debug("Step 1 : setting execute on load to true : action is {}", action1);
+//                    return action1;
+//                })
+//                .then(pageService.findById(testPage.getId(), READ_PAGES))
+//                .cache();
+//
+//        Mono<Page> actionAfterExecuteUpdateMono = actionBeforeMono
+//                .then(Mono.just(savedAction.getId()))
+//                .flatMap(actionId -> layoutActionService.setExecuteOnLoad(actionId, false))
+//                .map(action1 -> {
+//                    log.debug("saved action : {}", action1);
+//                    return action1;
+//                })
+//                .then(pageService.findById(testPage.getId(), READ_PAGES));
+//
+//
+//        StepVerifier
+//                .create(Mono.zip(actionBeforeMono, actionAfterExecuteUpdateMono))
+//                .assertNext(tuple -> {
+//                    Page pageBeforeUpdate = tuple.getT1();
+//                    Page pageAfterUpdate = tuple.getT2();
+//
+//                    assertThat(pageBeforeUpdate.getLayouts().get(0).getLayoutOnLoadActions().get(0).iterator().next().getName()).isEqualTo("query2");
+////                    assertThat(pageAfterUpdate.getLayouts().get(0).getLayoutOnLoadActions().size()).isEqualTo(0);
+//                    List<HashSet<DslActionDTO>> layoutOnLoadActions = pageAfterUpdate.getLayouts().get(0).getLayoutOnLoadActions();
+//                    boolean actionFound = false;
+//                    for (HashSet<DslActionDTO> actionSet : layoutOnLoadActions) {
+//                        for (DslActionDTO actionDTO : actionSet) {
+//                            log.debug("Found action in page load : {}", actionDTO.getName());
+//                            if (actionDTO.getId().equals(savedAction.getId())) {
+//                                actionFound = true;
+//                                break;
+//                            }
+//                        }
+//                    }
+//                    assertThat(actionFound).isFalse();
+//                })
+//                .verifyComplete();
+//
+//    }
+
+    @Test
+    @WithUserDetails(value = "api_user")
+    public void validSetPageLoadFalse() {
+        Mockito.when(pluginExecutorHelper.getPluginExecutor(Mockito.any())).thenReturn(Mono.just(new MockPluginExecutor()));
+
+        Action action = new Action();
+        action.setName("query2");
+        action.setPageId(testPage.getId());
+        ActionConfiguration actionConfiguration = new ActionConfiguration();
+        actionConfiguration.setHttpMethod(HttpMethod.GET);
+        action.setActionConfiguration(actionConfiguration);
+        Action savedAction = actionService.create(action).block();
+        log.debug("Init saved action : {}", savedAction);
+        Action updates = new Action();
+        updates.setExecuteOnLoad(true);
+        updates.setPolicies(null);
+        updates.setUserPermissions(null);
+
+
+
+        Mono<Page> actionBeforeMono =  layoutActionService.updateAction(savedAction.getId(), updates)
+                .map(action1 -> {
+                    log.debug("Step 1 : setting execute on load to true : action is {}", action1);
+                    return action1;
+                })
+                .then(pageService.findById(testPage.getId(), READ_PAGES))
+                .cache();
+
+        Mono<Page> actionAfterExecuteUpdateMono = actionBeforeMono
+                .then(Mono.just(savedAction.getId()))
+                .flatMap(actionId -> layoutActionService.setExecuteOnLoad(actionId, false))
+                .map(action1 -> {
+                    log.debug("saved action : {}", action1);
+                    return action1;
+                })
+                .then(pageService.findById(testPage.getId(), READ_PAGES));
+
+
+        StepVerifier
+                .create(Mono.zip(actionBeforeMono, actionAfterExecuteUpdateMono))
+                .assertNext(tuple -> {
+                    Page pageBeforeUpdate = tuple.getT1();
+                    Page pageAfterUpdate = tuple.getT2();
+
+                    assertThat(pageBeforeUpdate.getLayouts().get(0).getLayoutOnLoadActions().get(0).iterator().next().getName()).isEqualTo("query2");
+//                    assertThat(pageAfterUpdate.getLayouts().get(0).getLayoutOnLoadActions().size()).isEqualTo(0);
+                    List<HashSet<DslActionDTO>> layoutOnLoadActions = pageAfterUpdate.getLayouts().get(0).getLayoutOnLoadActions();
+                    boolean actionFound = false;
+                    for (HashSet<DslActionDTO> actionSet : layoutOnLoadActions) {
+                        for (DslActionDTO actionDTO : actionSet) {
+                            log.debug("Found action in page load : {}", actionDTO.getName());
+                            if (actionDTO.getId().equals(savedAction.getId())) {
+                                actionFound = true;
+                                break;
+                            }
+                        }
+                    }
+                    assertThat(actionFound).isFalse();
+                })
+                .verifyComplete();
+
     }
 }

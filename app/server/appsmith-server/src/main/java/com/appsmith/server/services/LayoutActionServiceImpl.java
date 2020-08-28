@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.appsmith.server.acl.AclPermission.MANAGE_ACTIONS;
 import static com.appsmith.server.acl.AclPermission.MANAGE_PAGES;
 import static com.appsmith.server.acl.AclPermission.READ_ACTIONS;
 import static com.appsmith.server.helpers.BeanCopyUtils.copyNewFieldValuesIntoOldObject;
@@ -497,12 +498,13 @@ public class LayoutActionServiceImpl implements LayoutActionService {
             return Mono.error(new AppsmithException(AppsmithError.INVALID_PARAMETER, FieldName.ID));
         }
 
-        Mono<Action> dbActionMono = actionService.findById(id)
+        Mono<Action> dbActionMono = actionService.findById(id, MANAGE_ACTIONS)
                 .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.NO_RESOURCE_FOUND, "action", id)));
 
         return dbActionMono
                 .map(dbAction -> {
                     copyNewFieldValuesIntoOldObject(action, dbAction);
+                    log.debug("Before updating action, action is : {}", dbAction);
                     return dbAction;
                 })
                 .flatMap(actionService::validateAndSaveActionToRepository)
@@ -520,5 +522,47 @@ public class LayoutActionServiceImpl implements LayoutActionService {
                             .then(Mono.just(savedAction))
                 )
                 .flatMap(analyticsService::sendUpdateEvent);
+    }
+
+    @Override
+    public Mono<Action> setExecuteOnLoad(String id, Boolean isExecuteOnLoad) {
+        return actionService.findById(id, MANAGE_ACTIONS)
+                .switchIfEmpty(Mono.error(new AppsmithException(AppsmithError.NO_RESOURCE_FOUND, FieldName.ACTION, id)))
+                .flatMap(action -> {
+                    log.debug("Step 2 : fetched before execute update is {}", action);
+                    Action updateAction = new Action();
+                    updateAction.setUserSetOnLoad(true);
+                    updateAction.setExecuteOnLoad(isExecuteOnLoad);
+                    updateAction.setDatasource(null);
+                    return this.updateAction(action.getId(), updateAction);
+                })
+                .flatMap(savedAction -> {
+                    log.debug("Step 2 : After execute update is set, action is : {}", savedAction);
+                    // Now that the action has been saved, update the page layout as well
+                    return Mono.justOrEmpty(savedAction.getPageId())
+                            .flatMap(pageId -> pageService.findById(pageId, MANAGE_PAGES))
+                            .flatMapMany(page -> {
+                                if (page.getLayouts() == null) {
+                                    return Mono.empty();
+                                }
+                                return Flux.fromIterable(page.getLayouts())
+                                        .flatMap(layout -> updateLayout(page.getId(), layout.getId(), layout));
+                            })
+                            .collectList()
+                            .map(layouts -> {
+                                for (Layout layout : layouts) {
+                                    List<HashSet<DslActionDTO>> layoutOnLoadActions = layout.getLayoutOnLoadActions();
+                                    log.debug("Layout : {}", layout.getId());
+                                    for (HashSet<DslActionDTO> actionSet : layoutOnLoadActions) {
+                                        for (DslActionDTO actionDTO : actionSet) {
+                                            log.debug("{}", actionDTO.getName());
+                                        }
+                                    }
+                                }
+                                return layouts;
+                            })
+                            .then(Mono.just(savedAction));
+                        }
+                );
     }
 }
