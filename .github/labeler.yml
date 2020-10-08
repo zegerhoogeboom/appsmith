@@ -1,0 +1,3 @@
+# We'll apply the QA label to issues that are being closed
+QA:
+- "*"

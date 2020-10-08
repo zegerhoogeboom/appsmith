@@ -1,0 +1,14 @@
+name: "Issue Labeler"
+on:
+  issues:
+    types: [closed]
+
+jobs:
+# This workflow labels the issue with 'QA' tag when it's closed. Ensures that all closed issues are easily searchable by QA folks.
+  label-qa-issues:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: github/issue-labeler@v2.0
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        configuration-path: .github/labeler.yml
