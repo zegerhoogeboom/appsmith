@@ -21,6 +21,7 @@ import AnalyticsUtil from "utils/AnalyticsUtil";
 import "components/editorComponents/CodeEditor/modes";
 import {
   EditorConfig,
+  EditorModes,
   EditorSize,
   EditorTheme,
   EditorThemes,
@@ -37,6 +38,15 @@ import { bindingMarker } from "components/editorComponents/CodeEditor/markHelper
 import { bindingHint } from "components/editorComponents/CodeEditor/hintHelpers";
 import { retryPromise } from "utils/AppsmithUtils";
 import BindingPrompt from "./BindingPrompt";
+import "codemirror/addon/lint/lint";
+import "codemirror/addon/lint/lint.css";
+import "./binding-lint";
+import { JSHINT } from "jshint";
+import { validator } from "./binding-lint";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+window.JSHINT = JSHINT;
 
 const LightningMenu = lazy(() =>
   retryPromise(() => import("components/editorComponents/LightningMenu")),
@@ -117,6 +127,7 @@ class CodeEditor extends Component<Props, State> {
         lineWrapping: this.props.size !== EditorSize.COMPACT,
         lineNumbers: this.props.showLineNumbers,
         addModeClass: true,
+        lint: validator,
         scrollbarStyle:
           this.props.size !== EditorSize.COMPACT ? "native" : "null",
       };

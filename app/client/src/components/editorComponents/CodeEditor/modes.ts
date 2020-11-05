@@ -9,13 +9,16 @@ CodeMirror.defineMode(EditorModes.TEXT_WITH_BINDING, function(config) {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore: No types available
   return CodeMirror.multiplexingMode(
-    CodeMirror.getMode(config, EditorModes.TEXT),
+    CodeMirror.getMode({ ...config, lint: true }, EditorModes.TEXT),
     {
       open: "{{",
       close: "}}",
-      mode: CodeMirror.getMode(config, {
-        name: "javascript",
-      }),
+      mode: CodeMirror.getMode(
+        { ...config, lint: false },
+        {
+          name: "javascript",
+        },
+      ),
     },
   );
 });
