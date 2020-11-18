@@ -8,6 +8,7 @@ import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.ApiImporter;
 import com.appsmith.server.services.CurlImporterService;
 import com.appsmith.server.services.PostmanImporterService;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,6 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping(Url.IMPORT_URL)
 @Slf4j
+@Timed
 public class RestApiImportController {
 
     private final CurlImporterService curlImporterService;

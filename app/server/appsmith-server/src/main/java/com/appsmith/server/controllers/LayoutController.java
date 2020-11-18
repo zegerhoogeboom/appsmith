@@ -6,6 +6,7 @@ import com.appsmith.server.dtos.RefactorNameDTO;
 import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.LayoutActionService;
 import com.appsmith.server.services.LayoutService;
+import io.micrometer.core.annotation.Timed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import javax.validation.Valid;
 
 @RestController
 @RequestMapping(Url.LAYOUT_URL)
+@Timed
 public class LayoutController {
 
     private final LayoutService service;

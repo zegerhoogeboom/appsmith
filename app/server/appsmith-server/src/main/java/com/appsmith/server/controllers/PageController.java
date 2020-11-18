@@ -6,6 +6,7 @@ import com.appsmith.server.dtos.PageDTO;
 import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.ApplicationPageService;
 import com.appsmith.server.services.NewPageService;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping(Url.PAGE_URL)
 @Slf4j
+@Timed
 public class PageController {
     private final ApplicationPageService applicationPageService;
     private final NewPageService newPageService;

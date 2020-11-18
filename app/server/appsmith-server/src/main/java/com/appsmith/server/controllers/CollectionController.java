@@ -5,6 +5,7 @@ import com.appsmith.server.domains.Collection;
 import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.ActionCollectionService;
 import com.appsmith.server.services.CollectionService;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import javax.validation.Valid;
 @RestController
 @RequestMapping(Url.COLLECTION_URL)
 @Slf4j
+@Timed
 public class CollectionController extends BaseController<CollectionService, Collection, String> {
     private final ActionCollectionService actionCollectionService;
 

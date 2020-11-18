@@ -4,6 +4,7 @@ import com.appsmith.external.models.Provider;
 import com.appsmith.server.constants.Url;
 import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.ProviderService;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping(Url.PROVIDER_URL)
 @Slf4j
+@Timed
 public class ProviderController extends BaseController<ProviderService, Provider, String> {
     public ProviderController(ProviderService service) {
         super(service);

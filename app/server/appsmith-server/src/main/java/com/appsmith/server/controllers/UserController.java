@@ -9,6 +9,7 @@ import com.appsmith.server.services.SessionUserService;
 import com.appsmith.server.services.UserOrganizationService;
 import com.appsmith.server.services.UserService;
 import com.appsmith.server.solutions.UserSignup;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,7 @@ import java.util.List;
 @RestController
 @RequestMapping(Url.USER_URL)
 @Slf4j
+@Timed
 public class UserController extends BaseController<UserService, User, String> {
 
     private final SessionUserService sessionUserService;

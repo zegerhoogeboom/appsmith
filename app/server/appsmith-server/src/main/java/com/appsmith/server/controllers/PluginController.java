@@ -6,6 +6,7 @@ import com.appsmith.server.domains.Plugin;
 import com.appsmith.server.dtos.PluginOrgDTO;
 import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.PluginService;
+import io.micrometer.core.annotation.Timed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.MultiValueMap;
@@ -25,6 +26,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(Url.PLUGIN_URL)
+@Timed
 public class PluginController extends BaseController<PluginService, Plugin, String> {
 
     @Autowired

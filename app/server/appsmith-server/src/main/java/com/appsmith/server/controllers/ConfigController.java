@@ -4,6 +4,7 @@ import com.appsmith.server.constants.Url;
 import com.appsmith.server.domains.Config;
 import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.ConfigService;
+import io.micrometer.core.annotation.Timed;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping(Url.CONFIG_URL)
+@Timed
 public class ConfigController extends BaseController<ConfigService, Config, String> {
 
     public ConfigController(ConfigService service) {

@@ -6,6 +6,7 @@ import com.appsmith.server.dtos.AddItemToPageDTO;
 import com.appsmith.server.dtos.ItemDTO;
 import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.ItemService;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.MultiValueMap;
@@ -22,6 +23,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping(Url.MARKETPLACE_ITEM_URL)
+@Timed
 public class ItemController {
     private final ItemService service;
 

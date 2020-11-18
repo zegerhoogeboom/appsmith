@@ -2,6 +2,7 @@ package com.appsmith.server.controllers;
 
 import com.appsmith.server.constants.Url;
 import com.appsmith.server.services.AssetService;
+import io.micrometer.core.annotation.Timed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.buffer.DefaultDataBuffer;
@@ -20,6 +21,7 @@ import reactor.core.publisher.Mono;
 @RequestMapping(Url.ASSET_URL)
 @Slf4j
 @RequiredArgsConstructor
+@Timed
 public class AssetController {
 
     private final AssetService service;

@@ -7,6 +7,7 @@ import com.appsmith.server.domains.Datasource;
 import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.DatasourceService;
 import com.appsmith.server.solutions.DatasourceStructureSolution;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @RestController
 @RequestMapping(Url.DATASOURCE_URL)
+@Timed
 public class DatasourceController extends BaseController<DatasourceService, Datasource, String> {
 
     private final DatasourceStructureSolution datasourceStructureSolution;

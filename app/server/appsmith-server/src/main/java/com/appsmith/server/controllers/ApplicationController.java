@@ -10,6 +10,7 @@ import com.appsmith.server.exceptions.AppsmithException;
 import com.appsmith.server.services.ApplicationPageService;
 import com.appsmith.server.services.ApplicationService;
 import com.appsmith.server.solutions.ApplicationFetcher;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,6 +48,7 @@ public class ApplicationController extends BaseController<ApplicationService, Ap
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Timed
     public Mono<ResponseDTO<Application>> create(@Valid @RequestBody Application resource,
                                                  @RequestParam String orgId,
                                                  ServerWebExchange exchange) {
@@ -59,18 +61,21 @@ public class ApplicationController extends BaseController<ApplicationService, Ap
     }
 
     @PostMapping("/publish/{applicationId}")
+    @Timed
     public Mono<ResponseDTO<Boolean>> publish(@PathVariable String applicationId) {
         return applicationPageService.publish(applicationId)
                 .map(published -> new ResponseDTO<>(HttpStatus.OK.value(), published, null));
     }
 
     @PutMapping("/{applicationId}/page/{pageId}/makeDefault")
+    @Timed
     public Mono<ResponseDTO<Application>> makeDefault(@PathVariable String applicationId, @PathVariable String pageId) {
         return applicationPageService.makePageDefault(applicationId, pageId)
                 .map(updatedApplication -> new ResponseDTO<>(HttpStatus.OK.value(), updatedApplication, null));
     }
 
     @DeleteMapping("/{id}")
+    @Timed
     public Mono<ResponseDTO<Application>> delete(@PathVariable String id) {
         log.debug("Going to delete application with id: {}", id);
         return applicationPageService.deleteApplication(id)
@@ -78,6 +83,7 @@ public class ApplicationController extends BaseController<ApplicationService, Ap
     }
 
     @GetMapping("/new")
+    @Timed
     public Mono<ResponseDTO<UserHomepageDTO>> getAllApplicationsForHome() {
         log.debug("Going to get all applications grouped by organization");
         return applicationFetcher.getAllApplications()
@@ -85,6 +91,7 @@ public class ApplicationController extends BaseController<ApplicationService, Ap
     }
 
     @PutMapping("/{applicationId}/changeAccess")
+    @Timed
     public Mono<ResponseDTO<Application>> shareApplication(@PathVariable String applicationId, @RequestBody ApplicationAccessDTO applicationAccessDTO) {
         log.debug("Going to change access for application {} to {}", applicationId, applicationAccessDTO.getPublicAccess());
         return service.changeViewAccess(applicationId, applicationAccessDTO)
@@ -92,12 +99,14 @@ public class ApplicationController extends BaseController<ApplicationService, Ap
     }
 
     @PostMapping("/clone/{applicationId}")
+    @Timed
     public Mono<ResponseDTO<Application>> cloneApplication(@PathVariable String applicationId) {
         return applicationPageService.cloneApplication(applicationId)
                 .map(created -> new ResponseDTO<>(HttpStatus.CREATED.value(), created, null));
     }
 
     @GetMapping("/view/{applicationId}")
+    @Timed
     public Mono<ResponseDTO<Application>> getApplicationInViewMode(@PathVariable String applicationId) {
         return service.getApplicationInViewMode(applicationId)
                 .map(application -> new ResponseDTO<>(HttpStatus.OK.value(), application, null));

@@ -12,6 +12,7 @@ import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.services.ActionCollectionService;
 import com.appsmith.server.services.LayoutActionService;
 import com.appsmith.server.services.NewActionService;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -53,6 +54,7 @@ public class ActionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Timed
     public Mono<ResponseDTO<ActionDTO>> createAction(@Valid @RequestBody ActionDTO resource,
                                                @RequestHeader(name = "Origin", required = false) String originHeader,
                                                ServerWebExchange exchange) {
@@ -62,6 +64,7 @@ public class ActionController {
     }
 
     @PutMapping("/{id}")
+    @Timed
     public Mono<ResponseDTO<ActionDTO>> updateAction(@PathVariable String id, @RequestBody ActionDTO resource) {
         log.debug("Going to update resource with id: {}", id);
         return actionCollectionService.updateAction(id, resource)
@@ -75,6 +78,7 @@ public class ActionController {
     }
 
     @PutMapping("/move")
+    @Timed
     public Mono<ResponseDTO<ActionDTO>> moveAction(@RequestBody @Valid ActionMoveDTO actionMoveDTO) {
         log.debug("Going to move action {} from page {} to page {}", actionMoveDTO.getAction().getName(), actionMoveDTO.getAction().getPageId(), actionMoveDTO.getDestinationPageId());
         return layoutActionService.moveAction(actionMoveDTO)
@@ -82,18 +86,21 @@ public class ActionController {
     }
 
     @PutMapping("/refactor")
+    @Timed
     public Mono<ResponseDTO<Layout>> refactorActionName(@RequestBody RefactorNameDTO refactorNameDTO) {
         return layoutActionService.refactorActionName(refactorNameDTO)
                 .map(created -> new ResponseDTO<>(HttpStatus.OK.value(), created, null));
     }
 
     @GetMapping("/view")
+    @Timed
     public Mono<ResponseDTO<List<ActionViewDTO>>> getActionsForViewMode(@RequestParam String applicationId) {
         return newActionService.getActionsForViewMode(applicationId).collectList()
                 .map(actions -> new ResponseDTO<>(HttpStatus.OK.value(), actions, null));
     }
 
     @PutMapping("/executeOnLoad/{id}")
+    @Timed
     public Mono<ResponseDTO<ActionDTO>> setExecuteOnLoad(@PathVariable String id, @RequestParam Boolean flag) {
         log.debug("Going to set execute on load for action id {} to {}", id, flag);
         return layoutActionService.setExecuteOnLoad(id, flag)
@@ -101,6 +108,7 @@ public class ActionController {
     }
 
     @DeleteMapping("/{id}")
+    @Timed
     public Mono<ResponseDTO<ActionDTO>> deleteAction(@PathVariable String id) {
         log.debug("Going to delete unpublished action with id: {}", id);
         return newActionService.deleteUnpublishedAction(id)
@@ -118,6 +126,7 @@ public class ActionController {
      * @return
      */
     @GetMapping("")
+    @Timed
     public Mono<ResponseDTO<List<ActionDTO>>> getAllUnpublishedActions(@RequestParam MultiValueMap<String, String> params) {
         log.debug("Going to get all actions");
         return newActionService.getUnpublishedActions(params).collectList()

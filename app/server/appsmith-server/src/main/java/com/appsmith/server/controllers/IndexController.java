@@ -2,6 +2,7 @@ package com.appsmith.server.controllers;
 
 import com.appsmith.server.domains.User;
 import com.appsmith.server.services.SessionUserService;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -16,6 +17,7 @@ import java.security.Principal;
 @Slf4j
 @RestController
 @RequestMapping("")
+@Timed
 public class IndexController {
 
     private final SessionUserService service;

@@ -8,6 +8,7 @@ import com.appsmith.server.dtos.ResponseDTO;
 import com.appsmith.server.dtos.SearchResponseDTO;
 import com.appsmith.server.services.MarketplaceService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.annotation.Timed;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.MultiValueMap;
@@ -23,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping(Url.MARKETPLACE_URL)
 @Slf4j
+@Timed
 public class MarketplaceController {
     private final MarketplaceService marketplaceService;
 
