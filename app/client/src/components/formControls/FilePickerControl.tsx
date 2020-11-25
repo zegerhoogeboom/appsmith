@@ -78,7 +78,10 @@ class FieldFileInput extends React.Component<Props, FieldFileInputState> {
           blob: file.data,
         };
         dslFiles.push(newFile);
-        this.uppy.getPlugin("Dashboard").closeModal();
+        const dashboard = this.uppy.getPlugin("Dashboard");
+        if (dashboard) {
+          dashboard.closeModal();
+        }
         this.props.input.onChange({
           name: file.name,
           base64Content: base64data,

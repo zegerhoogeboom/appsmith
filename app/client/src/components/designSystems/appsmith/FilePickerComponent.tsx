@@ -40,7 +40,10 @@ class FilePickerComponent extends React.Component<
   }
 
   public closeModal() {
-    this.props.uppy.getPlugin("Dashboard").closeModal();
+    const dashboard = this.props.uppy.getPlugin("Dashboard");
+    if (dashboard) {
+      dashboard.closeModal();
+    }
   }
 }
 

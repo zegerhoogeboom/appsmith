@@ -100,7 +100,10 @@ class FilePickerWidget extends BaseWidget<
         disablePageScrollWhenModalOpen: true,
         proudlyDisplayPoweredByUppy: false,
         onRequestCloseModal: () => {
-          this.uppy.getPlugin("Dashboard").closeModal();
+          const dashboard = this.uppy.getPlugin("Dashboard");
+          if (dashboard) {
+            dashboard.closeModal();
+          }
         },
         locale: {},
       })
