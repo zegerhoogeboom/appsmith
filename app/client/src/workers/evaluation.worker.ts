@@ -558,9 +558,11 @@ const overwriteDefaultDependentProps = (
   entity: DataTreeWidget,
 ) => {
   const defaultPropertyCache = getParsedValueCache(
-    `${entity.widgetName}.${defaultProperty}`,
+    `${entity.widgetId}.${entity.widgetName}.${defaultProperty}`,
   );
-  const propertyCache = getParsedValueCache(propertyPath);
+  const propertyCache = getParsedValueCache(
+    `${entity.widgetId}.${propertyPath}`,
+  );
 
   if (
     propertyValue === undefined ||
@@ -836,13 +838,15 @@ function validateAndParseWidgetProperty(
   if (isPathADynamicTrigger(widget, entityPropertyName)) {
     return unEvalPropertyValue;
   } else {
-    const parsedCache = getParsedValueCache(propertyPath);
+    const parsedCache = getParsedValueCache(
+      `${widget.widgetId}.${propertyPath}`,
+    );
     if (
       !equal(parsedCache.value, parsed) ||
       (cachedDependencyValues !== undefined &&
         !equal(currentDependencyValues, cachedDependencyValues))
     ) {
-      parsedValueCache.set(propertyPath, {
+      parsedValueCache.set(`${widget.widgetId}.${propertyPath}`, {
         value: parsed,
         version: Date.now(),
       });
