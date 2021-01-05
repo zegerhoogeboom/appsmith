@@ -25,7 +25,7 @@
 Appsmith is a fast, easy and secure way to build and maintain internal tools. Appsmith helps you build custom UI [**without HTML/CSS**], connect to your **APIs / databases** and securely share your applications. 
 The user interface is designed to make config customisation easy while allowing you to write code whenever logic is involved.
 
-![UI Builder Demo](https://source.unsplash.com/collection/195845/1600x520)
+<img src="https://source.unsplash.com/collection/195845/1600x520" />
 
 ------------------
 
