@@ -67,11 +67,13 @@ function* postEvalActionDispatcher(actions: ReduxAction<unknown>[]) {
 }
 
 function* evaluateTreeSaga(postEvalActions?: ReduxAction<unknown>[]) {
-  PerformanceTracker.startAsyncTracking(
-    PerformanceTransactionName.DATA_TREE_EVALUATION,
-  );
+  // PerformanceTracker.startAsyncTracking(
+  //   PerformanceTransactionName.DATA_TREE_EVALUATION,
+  // );
+  const start = performance.now();
   const unevalTree = yield select(getUnevaluatedDataTree);
-  log.debug({ unevalTree });
+  const unEvalTreeSelect = performance.now();
+  // log.debug({ unevalTree });
 
   const workerResponse = yield call(
     worker.request,
@@ -81,25 +83,37 @@ function* evaluateTreeSaga(postEvalActions?: ReduxAction<unknown>[]) {
       widgetTypeConfigMap,
     },
   );
+  const workerCall = performance.now();
 
   const { errors, dataTree, dependencies, logs } = workerResponse;
-  log.debug({ dataTree: dataTree });
-  logs.forEach((evalLog: any) => log.debug(evalLog));
-  evalErrorHandler(errors);
+  // log.debug({ dataTree: dataTree });
+  // logs.forEach((evalLog: any) => log.debug(evalLog));
+  // evalErrorHandler(errors);
   yield put({
     type: ReduxActionTypes.SET_EVALUATED_TREE,
     payload: dataTree,
   });
+  const setEvalTree = performance.now();
   yield put({
     type: ReduxActionTypes.SET_EVALUATION_INVERSE_DEPENDENCY_MAP,
     payload: { inverseDependencyMap: dependencies },
   });
-  PerformanceTracker.stopAsyncTracking(
-    PerformanceTransactionName.DATA_TREE_EVALUATION,
-  );
+  const setDependencyTree = performance.now();
+  // PerformanceTracker.stopAsyncTracking(
+  //   PerformanceTransactionName.DATA_TREE_EVALUATION,
+  // );
   if (postEvalActions && postEvalActions.length) {
     yield call(postEvalActionDispatcher, postEvalActions);
   }
+  const postEvalActionsTime = performance.now();
+  console.log({
+    unEvalTreeSelect: (unEvalTreeSelect - start).toFixed(2),
+    workerCall: (workerCall - unEvalTreeSelect).toFixed(2),
+    setEvalTree: (setEvalTree - workerCall).toFixed(2),
+    setDependencyTree: (setDependencyTree - setEvalTree).toFixed(2),
+    postEvalActions: (postEvalActionsTime - setDependencyTree).toFixed(2),
+    total: (postEvalActionsTime - start).toFixed(2),
+  });
 }
 
 export function* evaluateActionBindings(
