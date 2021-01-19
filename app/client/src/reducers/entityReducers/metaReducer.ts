@@ -10,16 +10,14 @@ export const metaReducer = createReducer(initialState, {
   [ReduxActionTypes.SET_META_PROP]: (
     state: MetaState,
     action: ReduxAction<UpdateWidgetMetaPropertyPayload>,
-  ) => {
-    const next = { ...state };
-    let widgetMetaProps: Record<string, any> = next[action.payload.widgetId];
-    if (widgetMetaProps === undefined) {
-      widgetMetaProps = {};
-      next[action.payload.widgetId] = widgetMetaProps;
-    }
-    (widgetMetaProps as Record<string, any>)[action.payload.propertyName] =
-      action.payload.propertyValue;
-    return next;
+  ): MetaState => {
+    return Object.assign(state, {
+      [action.payload.widgetId]: Object.assign(
+        {},
+        state[action.payload.widgetId],
+        action.payload.updates,
+      ),
+    });
   },
   [ReduxActionTypes.WIDGET_DELETE]: (
     state: MetaState,

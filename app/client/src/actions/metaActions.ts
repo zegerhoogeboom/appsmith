@@ -3,20 +3,17 @@ import { BatchAction, batchAction } from "actions/batchActions";
 
 export interface UpdateWidgetMetaPropertyPayload {
   widgetId: string;
-  propertyName: string;
-  propertyValue: any;
+  updates: Record<string, unknown>;
 }
 export const updateWidgetMetaProperty = (
   widgetId: string,
-  propertyName: string,
-  propertyValue: any,
+  updates: Record<string, unknown>,
 ): BatchAction<UpdateWidgetMetaPropertyPayload> => {
   return batchAction({
     type: ReduxActionTypes.SET_META_PROP,
     payload: {
       widgetId,
-      propertyName,
-      propertyValue,
+      updates,
     },
   });
 };

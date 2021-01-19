@@ -105,7 +105,7 @@ export function* showModalSaga(action: ReduxAction<{ modalId: string }>) {
   if (!metaProps || !metaProps.isVisible) {
     // Then show the modal we would like to show.
     yield put(
-      updateWidgetMetaProperty(action.payload.modalId, "isVisible", true),
+      updateWidgetMetaProperty(action.payload.modalId, { isVisible: true }),
     );
     yield delay(1000);
   }
@@ -160,7 +160,7 @@ export function* closeModalSaga(
     if (widgetIds) {
       yield all(
         widgetIds.map((widgetId: string) =>
-          put(updateWidgetMetaProperty(widgetId, "isVisible", false)),
+          put(updateWidgetMetaProperty(widgetId, { isVisible: false })),
         ),
       );
     }

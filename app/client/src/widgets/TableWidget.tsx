@@ -380,13 +380,16 @@ class TableWidget extends BaseWidget<TableWidgetProps, WidgetState> {
   };
 
   componentDidMount() {
-    const filteredTableData = this.filterTableData();
-    this.props.updateWidgetMetaProperty("filteredTableData", filteredTableData);
     const { selectedRowIndex } = this.props;
-    this.props.updateWidgetMetaProperty(
-      "selectedRow",
-      this.getSelectedRow(filteredTableData, selectedRowIndex),
+    const filteredTableData = this.filterTableData();
+    const selectedRow = this.getSelectedRow(
+      filteredTableData,
+      selectedRowIndex,
     );
+    this.props.batchUpdateWidgetMetaProperty({
+      filteredTableData,
+      selectedRow,
+    });
   }
 
   componentDidUpdate(prevProps: TableWidgetProps) {

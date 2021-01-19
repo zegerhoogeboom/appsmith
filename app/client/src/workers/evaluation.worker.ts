@@ -626,8 +626,15 @@ export class DataTreeEvaluator {
     );
   }
 
-  clearPropertyCache(propertyPath: string) {
-    this.parsedValueCache.delete(propertyPath);
+  clearPropertyCache(propertyPath: string | string[]) {
+    console.log({ clear: propertyPath });
+    if (Array.isArray(propertyPath)) {
+      propertyPath.forEach((path) => {
+        this.parsedValueCache.delete(path);
+      });
+    } else {
+      this.parsedValueCache.delete(propertyPath);
+    }
   }
 
   clearPropertyCacheOfWidget(widgetName: string) {

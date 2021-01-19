@@ -18,6 +18,7 @@ export interface WithMeta {
     propertyValue: any,
     actionExecution?: DebouncedExecuteActionPayload,
   ) => void;
+  batchUpdateWidgetMetaProperty: (updates: Record<string, unknown>) => void;
 }
 
 const withMeta = (WrappedWidget: typeof BaseWidget) => {
@@ -64,8 +65,9 @@ const withMeta = (WrappedWidget: typeof BaseWidget) => {
       propertyValue: any,
       actionExecution?: DebouncedExecuteActionPayload,
     ): void => {
+      console.log("received", propertyName, propertyValue, actionExecution);
       this.updatedProperties.set(propertyName, true);
-      if (actionExecution) {
+      if (actionExecution && actionExecution.dynamicString) {
         this.propertyTriggers.set(propertyName, actionExecution);
       }
       this.setState(
@@ -90,7 +92,7 @@ const withMeta = (WrappedWidget: typeof BaseWidget) => {
         if (updateWidgetMetaProperty) {
           const propertyValue = this.state[propertyName];
           clearEvalPropertyCache(`${widgetName}.${propertyName}`);
-          updateWidgetMetaProperty(widgetId, propertyName, propertyValue);
+          updateWidgetMetaProperty(widgetId, { [propertyName]: propertyValue });
           this.updatedProperties.delete(propertyName);
         }
         const debouncedPayload = this.propertyTriggers.get(propertyName);
@@ -105,15 +107,29 @@ const withMeta = (WrappedWidget: typeof BaseWidget) => {
       });
     }
 
+    batchUpdateWidgetMetaProperty = (updates: Record<string, unknown>) => {
+      const { updateWidgetMetaProperty } = this.context;
+      const { widgetId, widgetName } = this.props;
+      clearEvalPropertyCache(
+        Object.keys(updates).map((path) => `${widgetName}.${path}`),
+      );
+      updateWidgetMetaProperty(widgetId, updates);
+      this.setState({
+        ...updates,
+      });
+    };
+
     updatedProps = () => {
       return {
         ...this.props,
         ...this.state,
         updateWidgetMetaProperty: this.updateWidgetMetaProperty,
+        batchUpdateWidgetMetaProperty: this.batchUpdateWidgetMetaProperty,
       };
     };
 
     render() {
+      console.log({ widget: this.props.widgetName, state: this.state });
       return <WrappedWidget {...this.updatedProps()} />;
     }
   };

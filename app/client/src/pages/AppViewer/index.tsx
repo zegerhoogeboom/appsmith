@@ -47,8 +47,7 @@ export type AppViewerProps = {
   ) => void;
   updateWidgetMetaProperty: (
     widgetId: string,
-    propertyName: string,
-    propertyValue: any,
+    updates: Record<string, unknown>,
   ) => void;
   resetChildrenMetaProperty: (widgetId: string) => void;
 } & RouteComponentProps<BuilderRouteParams>;
@@ -123,10 +122,8 @@ const mapDispatchToProps = (dispatch: any) => ({
     ),
   updateWidgetMetaProperty: (
     widgetId: string,
-    propertyName: string,
-    propertyValue: any,
-  ) =>
-    dispatch(updateWidgetMetaProperty(widgetId, propertyName, propertyValue)),
+    updates: Record<string, unknown>,
+  ) => dispatch(updateWidgetMetaProperty(widgetId, updates)),
   resetChildrenMetaProperty: (widgetId: string) =>
     dispatch(resetChildrenMetaProperty(widgetId)),
   initializeAppViewer: (applicationId: string, pageId?: string) => {

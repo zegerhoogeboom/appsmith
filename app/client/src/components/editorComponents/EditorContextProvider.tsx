@@ -30,8 +30,7 @@ export type EditorContextType = {
   ) => void;
   updateWidgetMetaProperty?: (
     widgetId: string,
-    propertyName: string,
-    propertyValue: any,
+    updates: Record<string, unknown>,
   ) => void;
   resetChildrenMetaProperty?: (widgetId: string) => void;
   disableDrag?: (disable: boolean) => void;
@@ -93,10 +92,8 @@ const mapDispatchToProps = (dispatch: any) => {
     ) => dispatch(updateWidget(operation, widgetId, payload)),
     updateWidgetMetaProperty: (
       widgetId: string,
-      propertyName: string,
-      propertyValue: any,
-    ) =>
-      dispatch(updateWidgetMetaProperty(widgetId, propertyName, propertyValue)),
+      updates: Record<string, unknown>,
+    ) => dispatch(updateWidgetMetaProperty(widgetId, updates)),
     resetChildrenMetaProperty: (widgetId: string) =>
       dispatch(resetChildrenMetaProperty(widgetId)),
     disableDrag: (disable: boolean) => {

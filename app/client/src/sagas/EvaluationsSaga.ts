@@ -144,7 +144,8 @@ export function* clearEvalCache() {
   return true;
 }
 
-export function* clearEvalPropertyCache(propertyPath: string) {
+// Can accept one property path or an array of property paths
+export function* clearEvalPropertyCache(propertyPath: string | string[]) {
   yield call(worker.request, EVAL_WORKER_ACTIONS.CLEAR_PROPERTY_CACHE, {
     propertyPath,
   });

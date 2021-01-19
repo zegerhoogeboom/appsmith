@@ -118,6 +118,7 @@ export class DataTreeFactory {
       };
     });
     Object.keys(widgets).forEach((w) => {
+      debugger;
       const widget = { ...widgets[w] };
       const widgetMetaProps = widgetsMeta[w];
       const defaultMetaProps = WidgetFactory.getWidgetMetaPropertiesMap(
