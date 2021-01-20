@@ -230,12 +230,13 @@ class ChartComponent extends React.Component<ChartComponentProps> {
   createGraph = () => {
     if (this.props.chartType === "MANUAL") {
       const c = JSON.parse(this.props.chartConfigManual as any).config;
-      const chartConfig = Object.assign(c, {
+      const chartConfig = {
         type: this.getChartType(),
         renderAt: this.props.widgetId + "chart-container",
         width: "100%",
         height: "100%",
-      });
+        ...c,
+      };
       console.log(`Rendering manual chart: ${JSON.stringify(chartConfig)}`);
       this.chartInstance = new FusionCharts(chartConfig);
       return;
@@ -274,6 +275,9 @@ class ChartComponent extends React.Component<ChartComponentProps> {
 
   componentDidUpdate(prevProps: ChartComponentProps) {
     if (!_.isEqual(prevProps, this.props)) {
+      if (this.props.chartType === "MANUAL") {
+        return;
+      }
       const chartType = this.getChartType();
       this.chartInstance.chartType(chartType);
       if (
