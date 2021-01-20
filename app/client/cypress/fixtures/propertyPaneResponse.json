@@ -347,7 +347,11 @@
                                 {
                                     "label": "Area Chart",
                                     "value": "AREA_CHART"
-                                }
+                                },
+                              {
+                                "label": "Manual",
+                                "value": "MANUAL"
+                              }
                             ],
                             "isJSConvertible": true
                         },

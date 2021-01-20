@@ -4,7 +4,12 @@ import styled from "styled-components";
 
 import { invisible } from "constants/DefaultTheme";
 import { getAppsmithConfigs } from "configs";
-import { ChartType, ChartData, ChartDataPoint } from "widgets/ChartWidget";
+import {
+  ChartType,
+  ChartData,
+  ChartDataPoint,
+  ChartConfigManual,
+} from "widgets/ChartWidget";
 
 const FusionCharts = require("fusioncharts");
 const Charts = require("fusioncharts/fusioncharts.charts");
@@ -22,6 +27,7 @@ FusionCharts.options.license({
 export interface ChartComponentProps {
   chartType: ChartType;
   chartData: ChartData[];
+  chartConfigManual: ChartConfigManual;
   xAxisName: string;
   yAxisName: string;
   chartName: string;
@@ -222,6 +228,18 @@ class ChartComponent extends React.Component<ChartComponentProps> {
   };
 
   createGraph = () => {
+    if (this.props.chartType === "MANUAL") {
+      const c = JSON.parse(this.props.chartConfigManual as any).config;
+      const chartConfig = Object.assign(c, {
+        type: this.getChartType(),
+        renderAt: this.props.widgetId + "chart-container",
+        width: "100%",
+        height: "100%",
+      });
+      console.log(`Rendering manual chart: ${JSON.stringify(chartConfig)}`);
+      this.chartInstance = new FusionCharts(chartConfig);
+      return;
+    }
     const dataSource =
       this.props.allowHorizontalScroll && this.props.chartType !== "PIE_CHART"
         ? this.getScrollChartDataSource()

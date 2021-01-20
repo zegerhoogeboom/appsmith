@@ -37,6 +37,7 @@ class ChartWidget extends BaseWidget<ChartWidgetProps, WidgetState> {
           yAxisName={this.props.yAxisName}
           chartName={this.props.chartName}
           chartData={this.props.chartData}
+          chartConfigManual={this.props.chartConfigManual}
           widgetId={this.props.widgetId}
           allowHorizontalScroll={this.props.allowHorizontalScroll}
         />
@@ -55,7 +56,8 @@ export type ChartType =
   | "PIE_CHART"
   | "COLUMN_CHART"
   | "AREA_CHART"
-  | "SCATTER_CHART";
+  | "SCATTER_CHART"
+  | "MANUAL";
 
 export interface ChartDataPoint {
   x: any;
@@ -67,9 +69,14 @@ export interface ChartData {
   data: ChartDataPoint[];
 }
 
+export interface ChartConfigManual {
+  config: any;
+}
+
 export interface ChartWidgetProps extends WidgetProps {
   chartType: ChartType;
   chartData: ChartData[];
+  chartConfigManual: ChartConfigManual;
   xAxisName: string;
   yAxisName: string;
   chartName: string;

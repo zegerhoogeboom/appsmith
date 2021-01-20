@@ -530,6 +530,10 @@ const PropertyPaneConfigResponse: PropertyPaneConfigsResponse["data"] = {
                 label: "Area Chart",
                 value: "AREA_CHART",
               },
+              {
+                label: "Manual",
+                value: "MANUAL",
+              },
             ],
             isJSConvertible: true,
           },
@@ -540,6 +544,14 @@ const PropertyPaneConfigResponse: PropertyPaneConfigsResponse["data"] = {
             placeholderText: 'Enter [{ "x": "val", "y": "val" }]',
             label: "Chart Data",
             controlType: "CHART_DATA",
+          },
+          {
+            id: "13.1.63",
+            helpText: "Manually configure a FusionChart",
+            propertyName: "chartConfigManual",
+            placeholderText: "Enter {config: {}}",
+            label: "Manual Chart Config",
+            controlType: "INPUT_TEXT",
           },
           {
             id: "13.1.3",
