@@ -9,7 +9,10 @@ import { retryPromise } from "utils/AppsmithUtils";
 import { EventType } from "constants/ActionConstants";
 import withMeta, { WithMeta } from "widgets/MetaHOC";
 import propertyConfig from "widgets/ChartWidget/propertyConfig";
-import { CustomFusionChartConfig } from "components/designSystems/appsmith/ChartComponent";
+import {
+  CustomFusionChartConfig,
+  CustomPlotlyChartConfig,
+} from "components/designSystems/appsmith/ChartComponent";
 
 const ChartComponent = lazy(() =>
   retryPromise(() =>
@@ -28,6 +31,7 @@ class ChartWidget extends BaseWidget<ChartWidgetProps, WidgetState> {
       isVisible: VALIDATION_TYPES.BOOLEAN,
       chartData: VALIDATION_TYPES.CHART_DATA,
       customFusionChartConfig: VALIDATION_TYPES.CUSTOM_FUSION_CHARTS_DATA,
+      customPlotlyChartConfig: VALIDATION_TYPES.CUSTOM_PLOTLY_CHARTS_DATA,
     };
   }
 
@@ -66,6 +70,7 @@ class ChartWidget extends BaseWidget<ChartWidgetProps, WidgetState> {
           chartName={this.props.chartName}
           chartData={this.props.chartData}
           customFusionChartConfig={this.props.customFusionChartConfig}
+          customPlotlyChartConfig={this.props.customPlotlyChartConfig}
           widgetId={this.props.widgetId}
           onDataPointClick={this.onDataPointClick}
           allowHorizontalScroll={this.props.allowHorizontalScroll}
@@ -86,7 +91,8 @@ export type ChartType =
   | "COLUMN_CHART"
   | "AREA_CHART"
   | "SCATTER_CHART"
-  | "CUSTOM_FUSION_CHART";
+  | "CUSTOM_FUSION_CHART"
+  | "CUSTOM_PLOTLY_CHART";
 
 export interface ChartDataPoint {
   x: any;
@@ -102,6 +108,7 @@ export interface ChartWidgetProps extends WidgetProps, WithMeta {
   chartType: ChartType;
   chartData: ChartData[];
   customFusionChartConfig: { config: CustomFusionChartConfig };
+  customPlotlyChartConfig: CustomPlotlyChartConfig;
   xAxisName: string;
   yAxisName: string;
   chartName: string;

@@ -7,9 +7,21 @@ import { getAppsmithConfigs } from "configs";
 import { ChartData, ChartDataPoint, ChartType } from "widgets/ChartWidget";
 import log from "loglevel";
 
+import createPlotlyComponent from "react-plotly.js/factory";
+const Plotly = window.Plotly;
+
+const Plot = createPlotlyComponent(Plotly);
+
 export interface CustomFusionChartConfig {
   type: string;
   dataSource?: any;
+}
+
+export interface CustomPlotlyChartConfig {
+  data: [];
+  layout: any;
+  config: any;
+  frames: [];
 }
 
 const FusionCharts = require("fusioncharts");
@@ -45,6 +57,7 @@ export interface ChartComponentProps {
   chartType: ChartType;
   chartData: ChartData[];
   customFusionChartConfig: CustomFusionChartConfig;
+  customPlotlyChartConfig: CustomPlotlyChartConfig;
   xAxisName: string;
   yAxisName: string;
   chartName: string;
@@ -338,6 +351,16 @@ class ChartComponent extends React.Component<ChartComponentProps> {
 
   componentDidUpdate(prevProps: ChartComponentProps) {
     if (!_.isEqual(prevProps, this.props)) {
+      if (
+        prevProps.chartType === "CUSTOM_PLOTLY_CHART" &&
+        this.props.chartType !== "CUSTOM_PLOTLY_CHART" &&
+        this.chartInstance
+      ) {
+        this.chartInstance.render();
+      }
+      if (this.props.chartType === "CUSTOM_PLOTLY_CHART") {
+        return;
+      }
       if (this.props.chartType === "CUSTOM_FUSION_CHART") {
         const chartConfig = {
           renderAt: this.props.widgetId + "chart-container",
@@ -363,6 +386,14 @@ class ChartComponent extends React.Component<ChartComponentProps> {
   }
 
   render() {
+    if (this.props.chartType === "CUSTOM_PLOTLY_CHART") {
+      return (
+        <Plot
+          data={[...this.props.customPlotlyChartConfig.data]}
+          layout={{ ...this.props.customPlotlyChartConfig.layout }}
+        />
+      );
+    }
     //eslint-disable-next-line  @typescript-eslint/no-unused-vars
     const { onDataPointClick, ...rest } = this.props;
     return (
