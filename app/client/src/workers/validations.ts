@@ -403,6 +403,28 @@ export const VALIDATORS: Record<ValidationType, Validator> = {
     }
     return { isValid, parsed, transformed: parsed };
   },
+  [VALIDATION_TYPES.CUSTOM_PLOTLY_CHARTS_DATA]: (
+    value: any,
+    props: WidgetProps,
+    dataTree?: DataTree,
+  ): ValidationResponse => {
+    const { isValid, parsed } = VALIDATORS[VALIDATION_TYPES.OBJECT](
+      value,
+      props,
+      dataTree,
+    );
+    /*if (props.chartName && parsed.dataSource && parsed.dataSource.chart) {
+    parsed.dataSource.chart.caption = props.chartName;
+  }*/
+    if (!isValid) {
+      return {
+        isValid,
+        parsed,
+        message: `${WIDGET_TYPE_VALIDATION_ERROR}: Custom Fusion Charts Data`,
+      };
+    }
+    return { isValid, parsed, transformed: parsed };
+  },
   [VALIDATION_TYPES.MARKERS]: (
     value: any,
     props: WidgetProps,
