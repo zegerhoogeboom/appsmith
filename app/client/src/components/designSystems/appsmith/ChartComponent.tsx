@@ -65,6 +65,8 @@ export interface ChartComponentProps {
   isVisible?: boolean;
   allowHorizontalScroll: boolean;
   onDataPointClick: (selectedDataPoint: { x: any; y: any }) => void;
+  enableDrag: (e: any) => void;
+  disableDrag: (e: any) => void;
 }
 
 const CanvasContainer = styled.div<
@@ -81,9 +83,16 @@ const CanvasContainer = styled.div<
   padding: 10px 0 0 0;
 }`;
 
+const ChartWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border: ${(props) => getBorderCSSShorthand(props.theme.borders[2])};
+  border-radius: 0;
+`;
+
 class ChartComponent extends React.Component<ChartComponentProps> {
   chartInstance = new FusionCharts();
-
   getChartType = () => {
     const { chartType, allowHorizontalScroll, chartData } = this.props;
     const isMSChart = chartData.length > 1;
@@ -292,6 +301,9 @@ class ChartComponent extends React.Component<ChartComponentProps> {
   };
 
   createGraph = () => {
+    if (this.props.chartType === "CUSTOM_PLOTLY_CHART") {
+      return;
+    }
     if (this.props.chartType === "CUSTOM_FUSION_CHART") {
       const chartConfig = {
         renderAt: this.props.widgetId + "chart-container",
@@ -330,6 +342,9 @@ class ChartComponent extends React.Component<ChartComponentProps> {
 
   componentDidMount() {
     this.createGraph();
+    if (this.props.chartType === "CUSTOM_PLOTLY_CHART") {
+      return;
+    }
     FusionCharts.ready(() => {
       /* Component could be unmounted before FusionCharts is ready,
       this check ensure we don't render on unmounted component */
@@ -387,9 +402,25 @@ class ChartComponent extends React.Component<ChartComponentProps> {
 
   render() {
     if (this.props.chartType === "CUSTOM_PLOTLY_CHART") {
+      if (!this.props.customPlotlyChartConfig) {
+        return null;
+      }
+      console.log(
+        `Plotly config: ${this.props.customPlotlyChartConfig} ${JSON.stringify(
+          this.props.customPlotlyChartConfig.layout,
+        )}`,
+      );
+      /*      return (
+        <ChartWrapper onMouseLeave={this.props.enableDrag}>
+          <Plot
+            data={this.props.customPlotlyChartConfig.data || []}
+            layout={{ ...this.props.customPlotlyChartConfig.layout }}
+          />
+        </ChartWrapper>
+      ); */
       return (
         <Plot
-          data={[...this.props.customPlotlyChartConfig.data]}
+          data={this.props.customPlotlyChartConfig.data || []}
           layout={{ ...this.props.customPlotlyChartConfig.layout }}
         />
       );
@@ -397,7 +428,12 @@ class ChartComponent extends React.Component<ChartComponentProps> {
     //eslint-disable-next-line  @typescript-eslint/no-unused-vars
     const { onDataPointClick, ...rest } = this.props;
     return (
-      <CanvasContainer {...rest} id={this.props.widgetId + "chart-container"} />
+      <CanvasContainer
+        {...rest}
+        onMouseLeave={this.props.enableDrag}
+        onMouseEnter={this.props.disableDrag}
+        id={this.props.widgetId + "chart-container"}
+      />
     );
   }
 }

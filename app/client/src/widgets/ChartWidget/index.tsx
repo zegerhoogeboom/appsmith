@@ -74,6 +74,12 @@ class ChartWidget extends BaseWidget<ChartWidgetProps, WidgetState> {
           widgetId={this.props.widgetId}
           onDataPointClick={this.onDataPointClick}
           allowHorizontalScroll={this.props.allowHorizontalScroll}
+          enableDrag={() => {
+            this.disableDrag(false);
+          }}
+          disableDrag={() => {
+            this.disableDrag(true);
+          }}
         />
       </Suspense>
     );

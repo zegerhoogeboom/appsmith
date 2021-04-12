@@ -43,6 +43,10 @@ export default [
             label: "Custom Chart",
             value: "CUSTOM_FUSION_CHART",
           },
+          {
+            label: "Custom Plotly Chart",
+            value: "CUSTOM_PLOTLY_CHART",
+          },
         ],
         isJSConvertible: true,
         isBindProperty: true,
@@ -71,9 +75,19 @@ export default [
     hidden: (x: any) => x.chartType !== "CUSTOM_FUSION_CHART",
   },
   {
+    helpText: "Manually configure a Plotly chart, see https://www.plotly.com",
+    propertyName: "customPlotlyChartConfig",
+    placeholderText: `Enter a plotly JSON configuration`,
+    label: "Custom Plotly Chart Configuration",
+    controlType: "CUSTOM_PLOTLY_CHARTS_DATA",
+    isBindProperty: true,
+    isTriggerProperty: false,
+    hidden: (x: any) => x.chartType !== "CUSTOM_PLOTLY_CHART",
+  },
+  {
     sectionName: "Chart Data",
     hidden: (props: ChartWidgetProps) =>
-      props.chartType === "CUSTOM_FUSION_CHART",
+      ["CUSTOM_FUSION_CHART", "CUSTOM_PLOTLY_CHART"].includes(props.chartType),
     children: [
       {
         helpText: "Populates the chart with the data",
@@ -108,7 +122,7 @@ export default [
   {
     sectionName: "Axis",
     hidden: (props: ChartWidgetProps) =>
-      props.chartType === "CUSTOM_FUSION_CHART",
+      ["CUSTOM_FUSION_CHART", "CUSTOM_PLOTLY_CHART"].includes(props.chartType),
     children: [
       {
         helpText: "Specifies the label of the x-axis",
@@ -135,7 +149,8 @@ export default [
         controlType: "SWITCH",
         isBindProperty: false,
         isTriggerProperty: false,
-        hidden: (x: any) => x.chartType === "CUSTOM_FUSION_CHART",
+        hidden: (x: any) =>
+          ["CUSTOM_FUSION_CHART", "CUSTOM_PLOTLY_CHART"].includes(x.chartType),
       },
     ],
   },
