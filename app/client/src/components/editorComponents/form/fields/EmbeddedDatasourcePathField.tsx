@@ -173,14 +173,16 @@ class EmbeddedDatasourcePathComponent extends React.Component<Props> {
               hint: () => {
                 const list = datasourceList
                   .filter((datasource) =>
-                    datasource.datasourceConfiguration.url.includes(
+                    (datasource.datasourceConfiguration?.url || "").includes(
                       parsed.datasourceUrl,
                     ),
                   )
                   .map((datasource) => ({
                     text: datasource.datasourceConfiguration.url,
                     data: datasource,
-                    className: "datasource-hint",
+                    className: !datasource.isValid
+                      ? "datasource-hint invalid"
+                      : "datasource-hint",
                   }));
                 const hints = {
                   list,
@@ -239,6 +241,7 @@ class EmbeddedDatasourcePathComponent extends React.Component<Props> {
           <StoreAsDatasource enable={!!displayValue} />
         ) : datasource && "id" in datasource ? (
           <DatasourceIcon
+            enable
             onClick={() =>
               history.push(
                 DATA_SOURCES_EDITOR_ID_URL(
@@ -284,7 +287,7 @@ const mapStateToProps = (
     orgId: state.ui.orgs.currentOrg.id,
     datasource: datasourceMerged,
     datasourceList: state.entities.datasources.list.filter(
-      (d) => d.pluginId === ownProps.pluginId && d.isValid,
+      (d) => d.pluginId === ownProps.pluginId,
     ),
     currentPageId: state.entities.pageList.currentPageId,
     applicationId: state.entities.pageList.applicationId,
@@ -301,16 +304,16 @@ const EmbeddedDatasourcePathConnectedComponent = connect(
   mapDispatchToProps,
 )(EmbeddedDatasourcePathComponent);
 
-const EmbeddedDatasourcePathField = (
+function EmbeddedDatasourcePathField(
   props: BaseFieldProps & {
     pluginId: string;
     placeholder?: string;
     theme: EditorTheme;
   },
-) => {
+) {
   return (
     <Field component={EmbeddedDatasourcePathConnectedComponent} {...props} />
   );
-};
+}
 
 export default EmbeddedDatasourcePathField;

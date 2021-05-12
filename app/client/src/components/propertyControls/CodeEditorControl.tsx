@@ -18,6 +18,7 @@ class CodeEditorControl extends BaseControl<ControlProps> {
       dataTreePath,
       evaluatedValue,
       useValidationMessage,
+      jsErrorMessage,
     } = this.props;
     const props: Partial<ControlProps> = {};
     if (dataTreePath) props.dataTreePath = dataTreePath;
@@ -26,16 +27,17 @@ class CodeEditorControl extends BaseControl<ControlProps> {
 
     return (
       <CodeEditor
-        theme={this.props.theme}
         input={{ value: propertyValue, onChange: this.onChange }}
+        jsErrorMessage={jsErrorMessage}
         meta={{
           error: isValid ? "" : validationMessage,
           touched: true,
         }}
-        useValidationMessage={useValidationMessage}
-        size={EditorSize.EXTENDED}
         mode={EditorModes.TEXT_WITH_BINDING}
+        size={EditorSize.EXTENDED}
         tabBehaviour={TabBehaviour.INDENT}
+        theme={this.props.theme}
+        useValidationMessage={useValidationMessage}
         {...props}
       />
     );

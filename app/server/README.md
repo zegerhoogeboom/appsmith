@@ -1,6 +1,7 @@
 # Appsmith Server
 
 This is the server-side repository for the Appsmith framework.
+For details on setting up your development machine, please refer to the [Setup Guide](https://github.com/appsmithorg/appsmith/blob/release/contributions/ServerSetup.md)
 
 ### How to build 
 ```bash
@@ -30,4 +31,4 @@ In order to test the code, you can run the following command:
 mvn -B clean package
 ```
 
-Please make sure that you have a local Redis instance running for the test cases. During tests, the MongoDB is run in-memory. So you don't require to be running a local MongoDB instance. 
+Please make sure that you have a local Redis instance running for the test cases. During tests, the MongoDB is run in-memory. So you don't require to be running a local MongoDB instance.

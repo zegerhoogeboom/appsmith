@@ -4,18 +4,14 @@ import com.appsmith.external.dtos.ExecuteActionDTO;
 import com.appsmith.external.exceptions.pluginExceptions.AppsmithPluginError;
 import com.appsmith.external.exceptions.pluginExceptions.AppsmithPluginException;
 import com.appsmith.external.exceptions.pluginExceptions.StaleConnectionException;
-import com.appsmith.external.helpers.AppsmithEventContext;
-import com.appsmith.external.helpers.AppsmithEventContextType;
 import com.appsmith.external.helpers.MustacheHelper;
 import com.appsmith.external.models.ActionConfiguration;
 import com.appsmith.external.models.ActionExecutionRequest;
 import com.appsmith.external.models.ActionExecutionResult;
-import com.appsmith.external.constants.ActionResultDataType;
-import com.appsmith.external.models.DatasourceConfiguration;
 import com.appsmith.external.models.Param;
-import com.appsmith.external.models.ParsedDataType;
 import com.appsmith.external.models.Policy;
 import com.appsmith.external.models.Provider;
+import com.appsmith.external.models.RequestParamDTO;
 import com.appsmith.external.plugins.PluginExecutor;
 import com.appsmith.server.acl.AclPermission;
 import com.appsmith.server.acl.PolicyGenerator;
@@ -40,7 +36,6 @@ import com.appsmith.server.helpers.PluginExecutorHelper;
 import com.appsmith.server.helpers.PolicyUtils;
 import com.appsmith.server.repositories.NewActionRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -73,15 +68,14 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.appsmith.external.helpers.BeanCopyUtils.copyNewFieldValuesIntoOldObject;
+import static com.appsmith.external.helpers.DataTypeStringUtils.getDisplayDataTypes;
 import static com.appsmith.server.acl.AclPermission.EXECUTE_ACTIONS;
 import static com.appsmith.server.acl.AclPermission.EXECUTE_DATASOURCES;
 import static com.appsmith.server.acl.AclPermission.MANAGE_ACTIONS;
 import static com.appsmith.server.acl.AclPermission.MANAGE_DATASOURCES;
 import static com.appsmith.server.acl.AclPermission.READ_ACTIONS;
-import static com.appsmith.server.acl.AclPermission.READ_PAGES;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 
@@ -101,6 +95,7 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
     private final SessionUserService sessionUserService;
     private final PolicyUtils policyUtils;
     private final ObjectMapper objectMapper;
+    private final AuthenticationValidator authenticationValidator;
 
     public NewActionServiceImpl(Scheduler scheduler,
                                 Validator validator,
@@ -117,7 +112,7 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
                                 NewPageService newPageService,
                                 ApplicationService applicationService,
                                 SessionUserService sessionUserService,
-                                PolicyUtils policyUtils) {
+                                PolicyUtils policyUtils, AuthenticationValidator authenticationValidator) {
         super(scheduler, validator, mongoConverter, reactiveMongoTemplate, repository, analyticsService);
         this.repository = repository;
         this.datasourceService = datasourceService;
@@ -130,6 +125,7 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
         this.applicationService = applicationService;
         this.sessionUserService = sessionUserService;
         this.policyUtils = policyUtils;
+        this.authenticationValidator = authenticationValidator;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -155,7 +151,8 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
         action.setPolicies(newAction.getPolicies());
     }
 
-    private void setCommonFieldsFromActionDTOIntoNewAction(ActionDTO action, NewAction newAction) {
+    @Override
+    public void setCommonFieldsFromActionDTOIntoNewAction(ActionDTO action, NewAction newAction) {
         // Set the fields from NewAction into Action
         newAction.setOrganizationId(action.getOrganizationId());
         newAction.setPluginType(action.getPluginType());
@@ -189,69 +186,14 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
         return Mono.just(action);
     }
 
-    private void generateAndSetActionPolicies(NewPage page, NewAction action) {
+    @Override
+    public void generateAndSetActionPolicies(NewPage page, NewAction action) {
         Set<Policy> documentPolicies = policyGenerator.getAllChildPolicies(page.getPolicies(), Page.class, Action.class);
         action.setPolicies(documentPolicies);
     }
 
     @Override
-    public Mono<ActionDTO> createAction(ActionDTO action, AppsmithEventContext eventContext) {
-        if (action.getId() != null) {
-            return Mono.error(new AppsmithException(AppsmithError.INVALID_PARAMETER, "id"));
-        }
-
-        if (action.getPageId() == null || action.getPageId().isBlank()) {
-            return Mono.error(new AppsmithException(AppsmithError.INVALID_PARAMETER, FieldName.PAGE_ID));
-        }
-
-        NewAction newAction = new NewAction();
-        newAction.setPublishedAction(new ActionDTO());
-        newAction.getPublishedAction().setDatasource(new Datasource());
-
-        return newPageService
-                .findById(action.getPageId(), READ_PAGES)
-                .switchIfEmpty(Mono.error(
-                        new AppsmithException(AppsmithError.NO_RESOURCE_FOUND, FieldName.PAGE, action.getPageId())))
-                .flatMap(page -> {
-
-                    // Inherit the action policies from the page.
-                    generateAndSetActionPolicies(page, newAction);
-
-                    setCommonFieldsFromActionDTOIntoNewAction(action, newAction);
-
-                    // Set the application id in the main domain
-                    newAction.setApplicationId(page.getApplicationId());
-
-                    // If the datasource is embedded, check for organizationId and set it in action
-                    if (action.getDatasource() != null &&
-                            action.getDatasource().getId() == null) {
-                        Datasource datasource = action.getDatasource();
-                        if (datasource.getOrganizationId() == null) {
-                            return Mono.error(new AppsmithException(AppsmithError.INVALID_PARAMETER, FieldName.ORGANIZATION_ID));
-                        }
-                        newAction.setOrganizationId(datasource.getOrganizationId());
-                    }
-
-                    // New actions will never be set to auto-magical execution, unless it is triggered via a
-                    // page or application clone event.
-                    if (!AppsmithEventContextType.CLONE_PAGE.equals(eventContext.getAppsmithEventContextType())) {
-                        action.setExecuteOnLoad(false);
-                    }
-
-                    newAction.setUnpublishedAction(action);
-
-                    return Mono.just(newAction);
-                })
-                .flatMap(this::validateAndSaveActionToRepository);
-    }
-
-    @Override
-    public Mono<ActionDTO> createAction(ActionDTO action) {
-        AppsmithEventContext eventContext = new AppsmithEventContext(AppsmithEventContextType.DEFAULT);
-        return createAction(action, eventContext);
-    }
-
-    private Mono<ActionDTO> validateAndSaveActionToRepository(NewAction newAction) {
+    public Mono<ActionDTO> validateAndSaveActionToRepository(NewAction newAction) {
         ActionDTO action = newAction.getUnpublishedAction();
 
         //Default the validity to true and invalids to be an empty set.
@@ -298,17 +240,6 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
 
         Mono<Datasource> datasourceMono;
         if (action.getDatasource().getId() == null) {
-            if (action.getDatasource().getDatasourceConfiguration() != null &&
-                    action.getDatasource().getDatasourceConfiguration().getAuthentication() != null) {
-                action.getDatasource()
-                        .getDatasourceConfiguration()
-                        .setAuthentication(datasourceService.encryptAuthenticationFields(action
-                                .getDatasource()
-                                .getDatasourceConfiguration()
-                                .getAuthentication()
-                        ));
-            }
-
             datasourceMono = Mono.just(action.getDatasource())
                     .flatMap(datasourceService::validateDatasource);
         } else {
@@ -579,6 +510,7 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
 
         Mono<PluginExecutor> pluginExecutorMono = pluginExecutorHelper.getPluginExecutor(pluginMono);
 
+
         // 4. Execute the query
         Mono<ActionExecutionResult> actionExecutionResultMono = Mono
                 .zip(
@@ -594,7 +526,6 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
                     // Set the action name
                     actionName.set(action.getName());
 
-                    DatasourceConfiguration datasourceConfiguration = datasource.getDatasourceConfiguration();
                     ActionConfiguration actionConfiguration = action.getActionConfiguration();
 
                     Integer timeoutDuration = actionConfiguration.getTimeoutInMillisecond();
@@ -603,16 +534,20 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
                             Thread.currentThread().getName(),
                             action.getPageId(), actionId, action.getName());
 
-                    Mono<ActionExecutionResult> executionMono = Mono.just(datasource)
+                    Mono<Datasource> validatedDatasourceMono = authenticationValidator.validateAuthentication(datasource).cache();
+
+                    Mono<ActionExecutionResult> executionMono = validatedDatasourceMono
                             .flatMap(datasourceContextService::getDatasourceContext)
                             // Now that we have the context (connection details), execute the action.
-                            .flatMap(
-                                    resourceContext -> (Mono<ActionExecutionResult>) pluginExecutor.executeParameterized(
-                                            resourceContext.getConnection(),
-                                            executeActionDTO,
-                                            datasourceConfiguration,
-                                            actionConfiguration
-                                    )
+                            .flatMap(resourceContext -> validatedDatasourceMono
+                                    .flatMap(datasource1 -> {
+                                        return (Mono<ActionExecutionResult>) pluginExecutor.executeParameterized(
+                                                resourceContext.getConnection(),
+                                                executeActionDTO,
+                                                datasource1.getDatasourceConfiguration(),
+                                                actionConfiguration
+                                        );
+                                    })
                             );
 
                     return executionMono
@@ -669,20 +604,18 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
                                 );
 
                                 return Mono.zip(actionMono, actionDTOMono, datasourceMono)
-                                                .flatMap(tuple2 -> {
-                                                    ActionExecutionResult actionExecutionResult = result;
-                                                    NewAction actionFromDb = tuple2.getT1();
-                                                    ActionDTO actionDTO = tuple2.getT2();
-                                                    Datasource datasourceFromDb = tuple2.getT3();
+                                        .flatMap(tuple2 -> {
+                                            ActionExecutionResult actionExecutionResult = result;
+                                            NewAction actionFromDb = tuple2.getT1();
+                                            ActionDTO actionDTO = tuple2.getT2();
+                                            Datasource datasourceFromDb = tuple2.getT3();
 
-                                                    return Mono.when(sendExecuteAnalyticsEvent(actionFromDb, actionDTO, datasourceFromDb, executeActionDTO.getViewMode(), actionExecutionResult, timeElapsed))
-                                                            .thenReturn(result);
-                                                });
+                                            return Mono.when(sendExecuteAnalyticsEvent(actionFromDb, actionDTO, datasourceFromDb, executeActionDTO.getViewMode(), actionExecutionResult, timeElapsed))
+                                                    .thenReturn(result);
+                                        });
                                     }
                             );
-                });
-
-        return actionExecutionResultMono
+                })
                 .onErrorResume(AppsmithException.class, error -> {
                     ActionExecutionResult result = new ActionExecutionResult();
                     result.setIsExecutionSuccess(false);
@@ -690,15 +623,58 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
                     result.setBody(error.getMessage());
                     result.setTitle(error.getTitle());
                     return Mono.just(result);
-                })
-                .map(result -> {
+                });
+
+        Mono<Map> editorConfigLabelMapMono = datasourceMono
+                .flatMap(datasource -> {
+                    if (datasource.getId() != null) {
+                        return pluginService.getEditorConfigLabelMap(datasource.getPluginId());
+                    }
+
+                    return Mono.just(new HashMap());
+                });
+
+        return Mono.zip(actionExecutionResultMono, editorConfigLabelMapMono)
+                .flatMap(tuple -> {
+                    ActionExecutionResult result = tuple.getT1();
                     // In case the action was executed in view mode, do not return the request object
                     if (TRUE.equals(executeActionDTO.getViewMode())) {
                         result.setRequest(null);
+                        return Mono.just(result);
                     }
-                    return result;
+
+                    if (result.getRequest() == null || result.getRequest().getRequestParams() == null) {
+                        return Mono.just(result);
+                    }
+
+                    Map labelMap = tuple.getT2();
+                    transformRequestParams(result, labelMap);
+
+                    return Mono.just(result);
                 })
                 .map(result -> addDataTypes(result));
+    }
+
+    // Add label and data types to request param entities.
+    private void transformRequestParams(ActionExecutionResult result, Map<String, String> labelMap) {
+        List<RequestParamDTO> transformedParams = new ArrayList<>();
+        Map<String, RequestParamDTO> requestParamsConfigMap = new HashMap();
+        result.getRequest().getRequestParams().stream()
+                .forEach(param -> requestParamsConfigMap.put(param.getConfigProperty(), param));
+
+        labelMap.entrySet().stream()
+                .forEach(e -> {
+                    String configProperty = e.getKey();
+                    if(requestParamsConfigMap.containsKey(configProperty)) {
+                        RequestParamDTO param = requestParamsConfigMap.get(configProperty);
+                        param.setTypes(param.getValue() != null ?
+                                getDisplayDataTypes(param.getValue()) : new ArrayList<>());
+                        param.setLabel(e.getValue());
+                        transformedParams.add(param);
+                    }
+                });
+
+        result.getRequest().setRequestParams(transformedParams);
     }
 
     private ActionExecutionResult addDataTypes(ActionExecutionResult result) {
@@ -706,64 +682,12 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
          * - Do not process if data types are already present.
          * - It means that data types have been added by specific plugin.
          */
-        if(!CollectionUtils.isEmpty(result.getDataTypes())) {
+        if (!CollectionUtils.isEmpty(result.getDataTypes())) {
             return result;
         }
 
-        List<ParsedDataType> parsedDataTypeList = new ArrayList<>();
-        Stream.of(ActionResultDataType.values())
-                .parallel()
-                .map(type -> {
-                    try {
-                        return parseActionResultDataType(result.getBody().toString(), type);
-                    } catch (AppsmithException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .filter(type -> type != null)
-                .forEachOrdered(type -> parsedDataTypeList.add(type));
-
-        result.setDataTypes(parsedDataTypeList);
-
+        result.setDataTypes(getDisplayDataTypes(result.getBody()));
         return result;
-    }
-
-    private ParsedDataType parseActionResultDataType(String body, ActionResultDataType expectedType) throws AppsmithException {
-
-        switch (expectedType) {
-            case TABLE:
-                try {
-                    /*
-                     * - Check and return if the returned data is a valid table - i.e. an array of simple json objects.
-                     */
-                    objectMapper.readValue(body, new TypeReference<ArrayList<HashMap<String, String>>>() {});
-                    return new ParsedDataType(ActionResultDataType.TABLE);
-                } catch (JsonProcessingException e) {
-                    return null;
-                }
-
-            case JSON:
-                try {
-                    /*
-                     * - Check and return if the returned data is a valid json.
-                     */
-                    objectMapper.readTree(body);
-                    return new ParsedDataType(ActionResultDataType.JSON);
-                } catch (JsonProcessingException e) {
-                    return null;
-                }
-
-            case RAW:
-                /*
-                 * - Any data is by default categorized as raw.
-                 */
-                return new ParsedDataType(ActionResultDataType.RAW);
-            default:
-                throw new AppsmithException(
-                    AppsmithError.UNKNOWN_ACTION_RESULT_DATA_TYPE,
-                        expectedType.toString()
-                );
-        }
     }
 
     private Mono<ActionExecutionRequest> sendExecuteAnalyticsEvent(
@@ -792,7 +716,8 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
                     actionExecutionRequest.getHttpMethod(),
                     actionExecutionRequest.getUrl(),
                     actionExecutionRequest.getProperties(),
-                    actionExecutionRequest.getExecutionParameters()
+                    actionExecutionRequest.getExecutionParameters(),
+                    null
             );
         } else {
             request = new ActionExecutionRequest();
@@ -900,6 +825,12 @@ public class NewActionServiceImpl extends BaseService<NewActionRepository, NewAc
     public Mono<ActionDTO> findByUnpublishedNameAndPageId(String name, String pageId, AclPermission permission) {
         return repository.findByUnpublishedNameAndPageId(name, pageId, permission)
                 .flatMap(action -> generateActionByViewMode(action, false));
+    }
+
+    @Override
+    public Mono<ActionDTO> findActionDTObyIdAndViewMode(String id, Boolean viewMode, AclPermission permission) {
+        return this.findById(id, permission)
+                .flatMap(action -> generateActionByViewMode(action, viewMode));
     }
 
     @Override
