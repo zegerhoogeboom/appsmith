@@ -1,7 +1,12 @@
 import {
   DependencyMap,
+  EVAL_ERROR_PATH,
+  EvaluationError,
+  getEvalErrorPath,
+  getEvalValuePath,
   isChildPropertyPath,
   isDynamicValue,
+  PropertyEvaluationErrorType,
 } from "utils/DynamicBindingUtils";
 import { WidgetProps } from "widgets/BaseWidget";
 import { VALIDATORS } from "./validations";
@@ -16,6 +21,7 @@ import {
 import _ from "lodash";
 import { VALIDATION_TYPES } from "constants/WidgetValidation";
 import { WidgetTypeConfigMap } from "utils/WidgetFactory";
+import { Severity } from "entities/AppsmithConsole";
 
 // Dropdown1.options[1].value -> Dropdown1.options[1]
 // Dropdown1.options[1] -> Dropdown1.options
@@ -63,10 +69,20 @@ function isInt(val: string | number): boolean {
 // Removes the entity name from the property path
 export function getEntityNameAndPropertyPath(
   fullPath: string,
-): { entityName: string; propertyPath: string } {
+): {
+  entityName: string;
+  propertyPath: string;
+} {
   const indexOfFirstDot = fullPath.indexOf(".");
+  if (indexOfFirstDot === -1) {
+    // No dot was found so path is the entity name itself
+    return {
+      entityName: fullPath,
+      propertyPath: "",
+    };
+  }
   const entityName = fullPath.substring(0, indexOfFirstDot);
-  const propertyPath = fullPath.substring(fullPath.indexOf(".") + 1);
+  const propertyPath = fullPath.substring(indexOfFirstDot + 1);
   return { entityName, propertyPath };
 }
 
@@ -192,7 +208,11 @@ export const removeFunctions = (value: any) => {
   if (_.isFunction(value)) {
     return "Function call";
   } else if (_.isObject(value)) {
-    return JSON.parse(JSON.stringify(value));
+    return JSON.parse(
+      JSON.stringify(value, (_, v) =>
+        typeof v === "bigint" ? v.toString() : v,
+      ),
+    );
   } else {
     return value;
   }
@@ -279,7 +299,7 @@ export function getValidatedTree(tree: DataTree) {
     Object.entries(entity.validationPaths).forEach(([property, validation]) => {
       const value = _.get(entity, property);
       // Pass it through parse
-      const { parsed, isValid, message, transformed } = validateWidgetProperty(
+      const { isValid, message, parsed, transformed } = validateWidgetProperty(
         property,
         value,
         entity,
@@ -293,13 +313,24 @@ export function getValidatedTree(tree: DataTree) {
         ? value
         : transformed;
       const safeEvaluatedValue = removeFunctions(evaluatedValue);
-      _.set(parsedEntity, `evaluatedValues.${property}`, safeEvaluatedValue);
+      _.set(
+        parsedEntity,
+        getEvalValuePath(`${entityKey}.${property}`, false),
+        safeEvaluatedValue,
+      );
       if (!isValid) {
-        _.set(parsedEntity, `invalidProps.${property}`, true);
-        _.set(parsedEntity, `validationMessages.${property}`, message);
-      } else {
-        _.set(parsedEntity, `invalidProps.${property}`, false);
-        _.set(parsedEntity, `validationMessages.${property}`, "");
+        addErrorToEntityProperty(
+          [
+            {
+              errorType: PropertyEvaluationErrorType.VALIDATION,
+              errorMessage: message || "",
+              severity: Severity.ERROR,
+              raw: value,
+            },
+          ],
+          tree,
+          getEvalErrorPath(`${entityKey}.${property}`, false),
+        );
       }
     });
     return { ...tree, [entityKey]: parsedEntity };
@@ -493,3 +524,25 @@ export function getSafeToRenderDataTree(
     return { ...tree, [entityKey]: safeToRenderEntity };
   }, tree);
 }
+
+export const addErrorToEntityProperty = (
+  errors: EvaluationError[],
+  dataTree: DataTree,
+  path: string,
+) => {
+  const { entityName, propertyPath } = getEntityNameAndPropertyPath(path);
+  const logBlackList = _.get(dataTree, `${entityName}.logBlackList`, {});
+  if (propertyPath && !(propertyPath in logBlackList)) {
+    const existingErrors = _.get(
+      dataTree,
+      `${entityName}.${EVAL_ERROR_PATH}['${propertyPath}']`,
+      [],
+    ) as EvaluationError[];
+    _.set(
+      dataTree,
+      `${entityName}.${EVAL_ERROR_PATH}['${propertyPath}']`,
+      existingErrors.concat(errors),
+    );
+  }
+  return dataTree;
+};

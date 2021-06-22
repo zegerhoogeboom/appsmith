@@ -14,7 +14,7 @@ import "codemirror/addon/mode/multiplex";
 import "codemirror/addon/tern/tern.css";
 import { getDataTreeForAutocomplete } from "selectors/dataTreeSelectors";
 import EvaluatedValuePopup from "components/editorComponents/CodeEditor/EvaluatedValuePopup";
-import { WrappedFieldInputProps, WrappedFieldMetaProps } from "redux-form";
+import { WrappedFieldInputProps } from "redux-form";
 import _ from "lodash";
 import {
   DataTree,
@@ -49,7 +49,13 @@ import "codemirror/addon/fold/brace-fold";
 import "codemirror/addon/fold/foldgutter";
 import "codemirror/addon/fold/foldgutter.css";
 import * as Sentry from "@sentry/react";
-import { removeNewLineChars, getInputValue } from "./codeEditorUtils";
+import { getInputValue, removeNewLineChars } from "./codeEditorUtils";
+import { getEntityNameAndPropertyPath } from "workers/evaluationUtils";
+import {
+  EvaluationError,
+  getEvalErrorPath,
+  getEvalValuePath,
+} from "utils/DynamicBindingUtils";
 
 const LightningMenu = lazy(() =>
   retryPromise(() => import("components/editorComponents/LightningMenu")),
@@ -59,8 +65,8 @@ const AUTOCOMPLETE_CLOSE_KEY_CODES = [
   "Enter",
   "Tab",
   "Escape",
-  "Backspace",
   "Comma",
+  "Backspace",
 ];
 
 interface ReduxStateProps {
@@ -72,7 +78,6 @@ export type EditorStyleProps = {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   height?: string | number;
-  meta?: Partial<WrappedFieldMetaProps>;
   showLineNumbers?: boolean;
   className?: string;
   leftImage?: string;
@@ -88,7 +93,6 @@ export type EditorStyleProps = {
   fill?: boolean;
   useValidationMessage?: boolean;
   evaluationSubstitutionType?: EvaluationSubstitutionType;
-  jsErrorMessage?: string;
 };
 
 export type EditorProps = EditorStyleProps &
@@ -263,6 +267,7 @@ class CodeEditor extends Component<Props, State> {
   };
 
   handleEditorFocus = () => {
+    if (this.state.isFocused) return;
     this.setState({ isFocused: true });
     this.editor.refresh();
     if (this.props.size === EditorSize.COMPACT) {
@@ -273,9 +278,9 @@ class CodeEditor extends Component<Props, State> {
     }
   };
 
-  handleEditorBlur = () => {
+  handleEditorBlur = (cm: CodeMirror.Editor) => {
     this.handleChange();
-    this.setState({ isFocused: false });
+    if (!cm.state.completionActive) this.setState({ isFocused: false });
     if (this.props.size === EditorSize.COMPACT) {
       this.editor.setOption("lineWrapping", false);
     }
@@ -302,7 +307,11 @@ class CodeEditor extends Component<Props, State> {
   };
 
   handleAutocompleteVisibility = (cm: CodeMirror.Editor) => {
-    this.hinters.forEach((hinter) => hinter.showHint(cm));
+    const expected = this.props.expected ? this.props.expected : "";
+    const { entityName } = getEntityNameAndPropertyPath(
+      this.props.dataTreePath || "",
+    );
+    this.hinters.forEach((hinter) => hinter.showHint(cm, expected, entityName));
   };
 
   handleAutocompleteHide = (cm: any, event: KeyboardEvent) => {
@@ -336,35 +345,68 @@ class CodeEditor extends Component<Props, State> {
     });
   }
 
+  getPropertyValidation = (
+    dataTree: DataTree,
+    dataTreePath?: string,
+  ): {
+    isInvalid: boolean;
+    errors: EvaluationError[];
+    pathEvaluatedValue: unknown;
+  } => {
+    if (!dataTreePath) {
+      return {
+        isInvalid: false,
+        errors: [],
+        pathEvaluatedValue: undefined,
+      };
+    }
+
+    const errors = _.get(
+      dataTree,
+      getEvalErrorPath(dataTreePath),
+      [],
+    ) as EvaluationError[];
+    const pathEvaluatedValue = _.get(dataTree, getEvalValuePath(dataTreePath));
+
+    return {
+      isInvalid: errors.length > 0,
+      errors,
+      pathEvaluatedValue,
+    };
+  };
+
   render() {
     const {
-      input,
-      meta,
-      theme,
-      disabled,
+      border,
+      borderLess,
       className,
+      dataTreePath,
+      disabled,
+      dynamicData,
+      evaluatedValue,
+      evaluationSubstitutionType,
+      expected,
+      fill,
+      height,
+      hideEvaluatedValue,
+      hoverInteraction,
+      input,
       placeholder,
       showLightningMenu,
-      dataTreePath,
-      dynamicData,
-      expected,
       size,
-      evaluatedValue,
-      height,
-      borderLess,
-      border,
-      hoverInteraction,
-      fill,
+      theme,
       useValidationMessage,
-      hideEvaluatedValue,
-      evaluationSubstitutionType,
-      jsErrorMessage,
     } = this.props;
-    const hasError = !!(meta && meta.error) || !!jsErrorMessage;
+    const {
+      errors,
+      isInvalid,
+      pathEvaluatedValue,
+    } = this.getPropertyValidation(dynamicData, dataTreePath);
     let evaluated = evaluatedValue;
     if (dataTreePath) {
-      evaluated = _.get(dynamicData, dataTreePath);
+      evaluated = pathEvaluatedValue;
     }
+
     const showEvaluatedValue =
       this.state.isFocused &&
       ("evaluatedValue" in this.props ||
@@ -372,8 +414,8 @@ class CodeEditor extends Component<Props, State> {
 
     return (
       <DynamicAutocompleteInputWrapper
-        isActive={(this.state.isFocused && !hasError) || this.state.isOpened}
-        isError={hasError}
+        isActive={(this.state.isFocused && !isInvalid) || this.state.isOpened}
+        isError={isInvalid}
         isNotHover={this.state.isFocused || this.state.isOpened}
         skin={this.props.theme === EditorTheme.DARK ? Skin.DARK : Skin.LIGHT}
         theme={this.props.theme}
@@ -397,14 +439,13 @@ class CodeEditor extends Component<Props, State> {
           </Suspense>
         )}
         <EvaluatedValuePopup
-          error={meta?.error}
+          errors={errors}
           evaluatedValue={evaluated}
           evaluationSubstitutionType={evaluationSubstitutionType}
           expected={expected}
-          hasError={hasError}
+          hasError={isInvalid}
           hideEvaluatedValue={hideEvaluatedValue}
           isOpen={showEvaluatedValue}
-          jsError={jsErrorMessage}
           theme={theme || EditorTheme.LIGHT}
           useValidationMessage={useValidationMessage}
         >
@@ -415,7 +456,7 @@ class CodeEditor extends Component<Props, State> {
             disabled={disabled}
             editorTheme={this.props.theme}
             fill={fill}
-            hasError={hasError}
+            hasError={isInvalid}
             height={height}
             hoverInteraction={hoverInteraction}
             isFocused={this.state.isFocused}

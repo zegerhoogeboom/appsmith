@@ -21,7 +21,7 @@ const ChartComponent = lazy(() =>
 );
 
 class ChartWidget extends BaseWidget<ChartWidgetProps, WidgetState> {
-  static getMetaPropertiesMap(): Record<string, undefined> {
+  static getMetaPropertiesMap(): Record<string, any> {
     return {
       selectedDataPoint: undefined,
     };
@@ -97,7 +97,7 @@ export interface ChartData {
 export interface ChartWidgetProps extends WidgetProps, WithMeta {
   chartType: ChartType;
   chartData: AllChartData;
-  customFusionChartConfig: { config: CustomFusionChartConfig };
+  customFusionChartConfig: CustomFusionChartConfig;
   customPlotlyChartConfig: CustomPlotlyChartConfig;
   xAxisName: string;
   yAxisName: string;

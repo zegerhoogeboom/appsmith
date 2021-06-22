@@ -107,6 +107,11 @@ const debuggerReducer = createReducer(initialState, {
       errors: { ...action.payload },
     };
   },
+  [ReduxActionTypes.INIT_CANVAS_LAYOUT]: () => {
+    return {
+      ...initialState,
+    };
+  },
 });
 
 export interface DebuggerReduxState {

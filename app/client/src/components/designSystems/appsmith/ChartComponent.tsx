@@ -94,7 +94,7 @@ const ChartWrapper = styled.div`
 class ChartComponent extends React.Component<ChartComponentProps> {
   chartInstance = new FusionCharts();
   getChartType = () => {
-    const { chartType, allowHorizontalScroll, chartData } = this.props;
+    const { allowHorizontalScroll, chartData, chartType } = this.props;
     const dataLength = Object.keys(chartData).length;
     const isMSChart = dataLength > 1;
     switch (chartType) {
@@ -332,6 +332,15 @@ class ChartComponent extends React.Component<ChartComponentProps> {
         renderAt: this.props.widgetId + "chart-container",
         width: "100%",
         height: "100%",
+        events: {
+          dataPlotClick: (evt: any) => {
+            const data = evt.data;
+            this.props.onDataPointClick({
+              x: data.categoryLabel,
+              y: data.dataValue,
+            });
+          },
+        },
         ...this.getCustomFusionChartDataSource(),
       };
       this.chartInstance = new FusionCharts(chartConfig);

@@ -16,7 +16,7 @@ import { BaseButton } from "components/designSystems/blueprint/ButtonComponent";
 import JSONViewer from "./JSONViewer";
 import FormControl from "../FormControl";
 import Table from "./Table";
-import { Action } from "entities/Action";
+import { Action, QueryAction, SaaSAction } from "entities/Action";
 import { useDispatch } from "react-redux";
 import ActionNameEditor from "components/editorComponents/ActionNameEditor";
 import DropdownField from "components/editorComponents/form/fields/DropdownField";
@@ -47,6 +47,14 @@ import CloseEditor from "components/editorComponents/CloseEditor";
 import { setGlobalSearchQuery } from "actions/globalSearchActions";
 import { toggleShowGlobalSearchModal } from "actions/globalSearchActions";
 import { omnibarDocumentationHelper } from "constants/OmnibarDocumentationConstants";
+import EntityDeps from "components/editorComponents/Debugger/EntityDependecies";
+import { isHidden } from "components/formControls/utils";
+import {
+  createMessage,
+  DEBUGGER_ERRORS,
+  DEBUGGER_LOGS,
+  INSPECT_ENTITY,
+} from "constants/messages";
 
 const QueryFormContainer = styled.form`
   display: flex;
@@ -339,6 +347,7 @@ type QueryFormProps = {
   editorConfig?: any;
   formName: string;
   settingConfig: any;
+  formData: SaaSAction | QueryAction;
 };
 
 type ReduxProps = {
@@ -355,29 +364,31 @@ type Props = EditorJSONtoFormProps &
 
 export function EditorJSONtoForm(props: Props) {
   const {
+    actionName,
+    dataSources,
+    DATASOURCES_OPTIONS,
+    documentationLink,
+    editorConfig,
+    executedQueryData,
+    formName,
     handleSubmit,
     isDeleting,
     isRunning,
-    onRunClick,
-    onDeleteClick,
     onCreateDatasourceClick,
-    DATASOURCES_OPTIONS,
-    dataSources,
-    executedQueryData,
-    runErrorMessage,
+    onDeleteClick,
+    onRunClick,
     responseType,
-    documentationLink,
-    editorConfig,
+    runErrorMessage,
     settingConfig,
-    formName,
-    actionName,
   } = props;
-
   let error = runErrorMessage;
   let output: Record<string, any>[] | null = null;
   let hintMessages: Array<string> = [];
   const panelRef: RefObject<HTMLDivElement> = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [tableBodyHeight, setTableBodyHeightHeight] = useState(
+    window.innerHeight,
+  );
 
   if (executedQueryData) {
     if (!executedQueryData.isExecutionSuccess) {
@@ -457,6 +468,27 @@ export function EditorJSONtoForm(props: Props) {
     }
   };
 
+  const renderEachConfig = (formName: string) => (section: any): any => {
+    return section.children.map((formControlOrSection: ControlProps) => {
+      if (isHidden(props.formData, section.hidden)) return null;
+      if (formControlOrSection.hasOwnProperty("children")) {
+        return renderEachConfig(formName)(formControlOrSection);
+      } else {
+        try {
+          const { configProperty } = formControlOrSection;
+          return (
+            <FieldWrapper key={configProperty}>
+              <FormControl config={formControlOrSection} formName={formName} />
+            </FieldWrapper>
+          );
+        } catch (e) {
+          log.error(e);
+        }
+      }
+      return null;
+    });
+  };
+
   const responseTabs = [
     {
       key: "Response",
@@ -500,7 +532,7 @@ export function EditorJSONtoForm(props: Props) {
           )}
           {output &&
             (isTableResponse ? (
-              <Table data={output} />
+              <Table data={output} tableBodyHeight={tableBodyHeight} />
             ) : (
               <JSONViewer src={output} />
             ))}
@@ -515,13 +547,18 @@ export function EditorJSONtoForm(props: Props) {
     },
     {
       key: "ERROR",
-      title: "Errors",
+      title: createMessage(DEBUGGER_ERRORS),
       panelComponent: <ErrorLogs />,
     },
     {
       key: "LOGS",
-      title: "Logs",
+      title: createMessage(DEBUGGER_LOGS),
       panelComponent: <DebuggerLogs searchQuery={actionName} />,
+    },
+    {
+      key: "ENTITY_DEPENDENCIES",
+      title: createMessage(INSPECT_ENTITY),
+      panelComponent: <EntityDeps />,
     },
   ];
 
@@ -654,7 +691,12 @@ export function EditorJSONtoForm(props: Props) {
         </TabContainerView>
 
         <TabbedViewContainer ref={panelRef}>
-          <Resizable panelRef={panelRef} />
+          <Resizable
+            panelRef={panelRef}
+            setContainerDimensions={(height: number) =>
+              setTableBodyHeightHeight(height)
+            }
+          />
           {output && !!output.length && (
             <Boxed step={OnboardingStep.SUCCESSFUL_BINDING}>
               <ResultsCount>
@@ -685,23 +727,3 @@ export function EditorJSONtoForm(props: Props) {
     </QueryFormContainer>
   );
 }
-
-const renderEachConfig = (formName: string) => (section: any): any => {
-  return section.children.map((formControlOrSection: ControlProps) => {
-    if ("children" in formControlOrSection) {
-      return renderEachConfig(formName)(formControlOrSection);
-    } else {
-      try {
-        const { configProperty } = formControlOrSection;
-        return (
-          <FieldWrapper key={configProperty}>
-            <FormControl config={formControlOrSection} formName={formName} />
-          </FieldWrapper>
-        );
-      } catch (e) {
-        log.error(e);
-      }
-    }
-    return null;
-  });
-};

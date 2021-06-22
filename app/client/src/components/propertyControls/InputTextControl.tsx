@@ -14,8 +14,6 @@ export function InputText(props: {
   label: string;
   value: string;
   onChange: (event: React.ChangeEvent<HTMLTextAreaElement> | string) => void;
-  isValid: boolean;
-  errorMessage?: string;
   evaluatedValue?: any;
   expected?: string;
   placeholder?: string;
@@ -23,19 +21,15 @@ export function InputText(props: {
   additionalAutocomplete?: Record<string, Record<string, unknown>>;
   theme?: EditorTheme;
   hideEvaluatedValue?: boolean;
-  jsErrorMessage?: string;
 }) {
   const {
-    errorMessage,
-    expected,
-    value,
-    isValid,
-    onChange,
-    placeholder,
     dataTreePath,
     evaluatedValue,
+    expected,
     hideEvaluatedValue,
-    jsErrorMessage,
+    onChange,
+    placeholder,
+    value,
   } = props;
 
   return (
@@ -50,11 +44,6 @@ export function InputText(props: {
           value: value,
           onChange: onChange,
         }}
-        jsErrorMessage={jsErrorMessage}
-        meta={{
-          error: isValid ? "" : errorMessage,
-          touched: true,
-        }}
         mode={EditorModes.TEXT_WITH_BINDING}
         placeholder={placeholder}
         size={EditorSize.EXTENDED}
@@ -68,28 +57,22 @@ export function InputText(props: {
 class InputTextControl extends BaseControl<InputControlProps> {
   render() {
     const {
+      additionalAutoComplete,
+      dataTreePath,
+      defaultValue,
       expected,
-      propertyValue,
-      isValid,
+      hideEvaluatedValue,
       label,
       placeholderText,
-      dataTreePath,
-      validationMessage,
-      defaultValue,
-      additionalAutoComplete,
-      hideEvaluatedValue,
-      jsErrorMessage,
+      propertyValue,
     } = this.props;
 
     return (
       <InputText
         additionalAutocomplete={additionalAutoComplete}
         dataTreePath={dataTreePath}
-        errorMessage={validationMessage}
         expected={expected}
         hideEvaluatedValue={hideEvaluatedValue}
-        isValid={isValid}
-        jsErrorMessage={jsErrorMessage}
         label={label}
         onChange={this.onTextChange}
         placeholder={placeholderText}
